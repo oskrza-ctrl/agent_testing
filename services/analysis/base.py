@@ -8,6 +8,6 @@ class AnalysisService(ABC):
     """
 
     @abstractmethod
-    def analyze(self, transcript: str) -> str:
-        """Analyze a transcript and return a Markdown string."""
+    def analyze(self, prompt: str) -> str:
+        """Send a fully assembled prompt and return a Markdown string."""
         ...

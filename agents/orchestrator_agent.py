@@ -20,12 +20,13 @@ class OrchestratorAgent:
         input_dir: Path,
         output_dir: Path,
         processed_dir: Path,
+        prompts_dir: Path,
     ):
         self.input_dir = input_dir
         self.output_dir = output_dir
 
         self.transcription_agent = TranscriptionAgent(transcription_svc)
-        self.analysis_agent = AnalysisAgent(analysis_svc)
+        self.analysis_agent = AnalysisAgent(analysis_svc, prompts_dir)
         self.markdown_agent = MarkdownAgent()
         self.archive_agent = ArchiveAgent(processed_dir)
 

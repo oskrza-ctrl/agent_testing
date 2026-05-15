@@ -25,6 +25,7 @@ orchestrator = OrchestratorAgent(
     input_dir=Path("input"),
     output_dir=Path("output"),
     processed_dir=Path("processed"),
+    prompts_dir=Path("prompts"),
 )
 
 orchestrator.run()
