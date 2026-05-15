@@ -1,5 +1,7 @@
 from abc import ABC, abstractmethod
 
+from services.analysis.analysis_result import AnalysisResult
+
 
 class AnalysisService(ABC):
     """Base interface for text analysis providers.
@@ -8,6 +10,6 @@ class AnalysisService(ABC):
     """
 
     @abstractmethod
-    def analyze(self, prompt: str) -> str:
-        """Send a fully assembled prompt and return a Markdown string."""
+    def analyze(self, prompt: str) -> AnalysisResult:
+        """Send a fully assembled prompt and return a structured AnalysisResult."""
         ...

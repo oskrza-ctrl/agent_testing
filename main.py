@@ -26,6 +26,7 @@ orchestrator = OrchestratorAgent(
     output_dir=Path("output"),
     processed_dir=Path("processed"),
     prompts_dir=Path("prompts"),
+    kb_dir=Path("Knowledge_Base"),
 )
 
 orchestrator.run()

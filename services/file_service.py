@@ -1,17 +1,16 @@
 from pathlib import Path
 
 
-def find_mp3(input_dir: Path) -> Path:
-    """Returns the first MP3 found in input_dir, or exits if none."""
-    mp3_files = list(input_dir.glob("*.mp3"))
+def find_all_mp3(input_dir: Path) -> list:
+    """Returns all MP3 files found in input_dir, sorted by name."""
+    mp3_files = sorted(input_dir.glob("*.mp3"))
 
     if not mp3_files:
         print("No MP3 files found in input/")
-        exit(1)
+    else:
+        print(f"Found {len(mp3_files)} MP3 file(s): {[f.name for f in mp3_files]}")
 
-    mp3_path = mp3_files[0]
-    print(f"MP3 file found: {mp3_path.name}")
-    return mp3_path
+    return mp3_files
 
 
 def save_text(path: Path, content: str) -> None:
