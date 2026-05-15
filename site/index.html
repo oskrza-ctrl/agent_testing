@@ -3,395 +3,108 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Second Brain Agent</title>
+  <title>🗺️ Roadmap — Second Brain Agent</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:ital,wght@0,400;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
 
-  <!-- NAV -->
-  <nav>
-    <div class="nav-inner">
-      <span class="nav-logo">⬡ Second Brain Agent</span>
-      <div class="nav-links">
-        <a href="#problema">Problema</a>
-        <a href="#flujo">Flujo</a>
-        <a href="#arquitectura">Arquitectura</a>
-        <a href="#roadmap">Roadmap</a>
-        <a href="#estado">Estado</a>
-      </div>
-    </div>
-  </nav>
-
   <!-- HERO -->
-  <section class="hero">
-    <div class="container">
-      <div class="badge">MVP Local · En Desarrollo</div>
-      <h1>Second Brain<br><span class="accent">Agent</span></h1>
-      <p class="hero-sub">
-        Un asistente personal que convierte audios, notas y transcripciones
-        en un sistema organizado de ideas, tareas, reuniones y proyectos.
-      </p>
-      <div class="hero-stack">
-        <span class="tag">Python</span>
-        <span class="tag">OpenAI Whisper</span>
-        <span class="tag">GPT-4o mini</span>
-        <span class="tag">Markdown</span>
+  <header class="hero">
+    <div class="stars" id="stars"></div>
+    <div class="hero-inner">
+      <div class="hero-pill">🗺️ Viaje en progreso</div>
+      <h1 class="hero-title">Second Brain Agent</h1>
+      <p class="hero-subtitle">Tu segundo cerebro personal: de audios y notas al conocimiento organizado</p>
+      <div class="stats-row">
+        <div class="stat done-stat">
+          <span class="stat-icon">✅</span>
+          <span class="stat-num" id="count-done">—</span>
+          <span class="stat-label">completadas</span>
+        </div>
+        <div class="stat current-stat">
+          <span class="stat-icon">🔄</span>
+          <span class="stat-num">1</span>
+          <span class="stat-label">en progreso</span>
+        </div>
+        <div class="stat pending-stat">
+          <span class="stat-icon">⏳</span>
+          <span class="stat-num" id="count-pending">—</span>
+          <span class="stat-label">pendientes</span>
+        </div>
       </div>
     </div>
-  </section>
 
-  <!-- PROBLEMA -->
-  <section id="problema" class="section">
-    <div class="container">
-      <div class="section-label">El problema</div>
-      <h2>La información valiosa se pierde todos los días</h2>
-      <p class="section-intro">
-        Ideas, pendientes, notas de reuniones y recordatorios se capturan en el momento,
-        pero quedan dispersos sin estructura ni seguimiento.
-      </p>
-      <div class="problems-grid">
-        <div class="problem-card">
-          <div class="problem-icon">🎙️</div>
-          <h3>Audios sin procesar</h3>
-          <p>Las notas de voz quedan archivadas sin transcribirse ni analizarse.</p>
-        </div>
-        <div class="problem-card">
-          <div class="problem-icon">📋</div>
-          <h3>Tareas que se pierden</h3>
-          <p>Las acciones derivadas de llamadas o notas nunca llegan a una lista accionable.</p>
-        </div>
-        <div class="problem-card">
-          <div class="problem-icon">💡</div>
-          <h3>Ideas enterradas</h3>
-          <p>Buenas ideas quedan atrapadas en transcripts sin conectarse a proyectos.</p>
-        </div>
-        <div class="problem-card">
-          <div class="problem-icon">📅</div>
-          <h3>Reuniones sin minuta</h3>
-          <p>Conversaciones importantes generan información útil que nadie resume ni guarda.</p>
-        </div>
-        <div class="problem-card">
-          <div class="problem-icon">🗂️</div>
-          <h3>Sin memoria central</h3>
-          <p>No existe un lugar único que relacione notas, tareas, ideas y proyectos.</p>
-        </div>
-        <div class="problem-card">
-          <div class="problem-icon">⚡</div>
-          <h3>Caos documental</h3>
-          <p>Crear un archivo por cada idea genera desorden en lugar de claridad.</p>
-        </div>
+    <!-- Horizontal progress gauge -->
+    <div class="progress-gauge">
+      <div class="gauge-label">Progreso del viaje</div>
+      <div class="gauge-track">
+        <div class="gauge-fill" id="gauge-fill"></div>
+        <div class="gauge-car" id="gauge-car">🚗</div>
+      </div>
+      <div class="gauge-ends">
+        <span>🏁 Inicio</span>
+        <span id="gauge-pct">0%</span>
+        <span>🧠 Meta</span>
       </div>
     </div>
-  </section>
+  </header>
 
-  <!-- FLUJO -->
-  <section id="flujo" class="section section-dark">
-    <div class="container">
-      <div class="section-label">Cómo funciona</div>
-      <h2>Del audio al conocimiento organizado</h2>
-      <p class="section-intro">
-        El sistema toma cualquier archivo de entrada y lo convierte automáticamente
-        en una base de conocimiento estructurada.
-      </p>
-      <div class="flow">
-        <div class="flow-step">
-          <div class="flow-icon">📂</div>
-          <div class="flow-label">Input</div>
-          <div class="flow-desc">MP3, TXT o MD<br>en <code>input/</code></div>
-        </div>
-        <div class="flow-arrow">→</div>
-        <div class="flow-step">
-          <div class="flow-icon">🎧</div>
-          <div class="flow-label">Transcripción</div>
-          <div class="flow-desc">OpenAI Whisper<br>convierte audio a texto</div>
-        </div>
-        <div class="flow-arrow">→</div>
-        <div class="flow-step">
-          <div class="flow-icon">🧠</div>
-          <div class="flow-label">Análisis IA</div>
-          <div class="flow-desc">GPT-4o mini<br>clasifica y extrae</div>
-        </div>
-        <div class="flow-arrow">→</div>
-        <div class="flow-step">
-          <div class="flow-icon">🗃️</div>
-          <div class="flow-label">Clasificación</div>
-          <div class="flow-desc">Idea, tarea, reunión,<br>recordatorio o proyecto</div>
-        </div>
-        <div class="flow-arrow">→</div>
-        <div class="flow-step">
-          <div class="flow-icon">📁</div>
-          <div class="flow-label">Knowledge Base</div>
-          <div class="flow-desc">Archivos Markdown<br>organizados y accionables</div>
-        </div>
-      </div>
+  <!-- CURRENT STEP BANNER -->
+  <div class="current-banner">
+    <div class="banner-inner">
+      <span class="banner-icon">📍</span>
+      <span class="banner-text">Estás en: <strong id="banner-title">—</strong></span>
+      <span class="banner-next">Siguiente: <span id="banner-next">—</span></span>
     </div>
-  </section>
+  </div>
 
-  <!-- ARQUITECTURA V1 -->
-  <section id="arquitectura" class="section">
-    <div class="container">
-      <div class="section-label">Arquitectura V1</div>
-      <h2>Pipeline técnico actual</h2>
-      <div class="arch-grid">
-        <div class="arch-pipeline">
-          <div class="pipeline-step">
-            <span class="step-num">01</span>
-            <div>
-              <strong>Detección de archivo</strong>
-              <p>El sistema escanea <code>input/</code> y detecta el tipo de archivo (MP3, TXT, MD).</p>
-            </div>
-          </div>
-          <div class="pipeline-connector"></div>
-          <div class="pipeline-step">
-            <span class="step-num">02</span>
-            <div>
-              <strong>Transcripción (si aplica)</strong>
-              <p>Los archivos MP3 se transcriben con <code>whisper-1</code>. TXT y MD se leen directamente.</p>
-            </div>
-          </div>
-          <div class="pipeline-connector"></div>
-          <div class="pipeline-step">
-            <span class="step-num">03</span>
-            <div>
-              <strong>Análisis de contenido</strong>
-              <p><code>gpt-4o-mini</code> clasifica la categoría principal y extrae elementos secundarios.</p>
-            </div>
-          </div>
-          <div class="pipeline-connector"></div>
-          <div class="pipeline-step">
-            <span class="step-num">04</span>
-            <div>
-              <strong>Actualización de Knowledge Base</strong>
-              <p>Ideas, tareas, reuniones y recordatorios se guardan en sus archivos correspondientes.</p>
-            </div>
-          </div>
-          <div class="pipeline-connector"></div>
-          <div class="pipeline-step">
-            <span class="step-num">05</span>
-            <div>
-              <strong>Integraciones (V1.3)</strong>
-              <p>Google Tasks y Google Calendar cuando la acción tiene fecha y hora claras.</p>
-            </div>
-          </div>
-        </div>
-        <div class="arch-output">
-          <div class="output-title">Knowledge Base</div>
-          <div class="file-tree">
-            <div class="tree-item folder">📁 Knowledge_Base/</div>
-            <div class="tree-item file">  📄 Ideas/ideas.md</div>
-            <div class="tree-item file">  📄 Tasks/tasks.md</div>
-            <div class="tree-item file">  📄 Meetings/YYYY-MM-DD_reunion.md</div>
-            <div class="tree-item file">  📄 Reminders/reminders.md</div>
-            <div class="tree-item file">  📄 Projects/projects.md</div>
-            <div class="tree-item file">  📄 Transcripts/audio_transcript.txt</div>
-            <div class="tree-item file">  📄 Processed/archivos_originales/</div>
-          </div>
-          <div class="services-title">Servicios modulares</div>
-          <div class="services-list">
-            <div class="service-item">
-              <span class="service-name">TranscriptionService</span>
-              <span class="service-impl">whisper-1 → local</span>
-            </div>
-            <div class="service-item">
-              <span class="service-name">TextAnalysisService</span>
-              <span class="service-impl">gpt-4o-mini → Ollama</span>
-            </div>
-            <div class="service-item">
-              <span class="service-name">TaskService</span>
-              <span class="service-impl">Markdown → Google Tasks</span>
-            </div>
-            <div class="service-item">
-              <span class="service-name">CalendarService</span>
-              <span class="service-impl">— → Google Calendar</span>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
+  <!-- ROAD TIMELINE -->
+  <main class="road-main">
+    <div class="timeline-wrap" id="timeline-wrap">
 
-  <!-- DECISIONES -->
-  <section class="section section-dark">
-    <div class="container">
-      <div class="section-label">Reglas funcionales</div>
-      <h2>Decisiones clave del sistema</h2>
-      <div class="decisions-grid">
-        <div class="decision-card">
-          <div class="decision-tag">DEC-007</div>
-          <h3>Calendario vs. Tareas</h3>
-          <div class="rule-table">
-            <div class="rule-row">
-              <span class="rule-case">Fecha + hora clara</span>
-              <span class="rule-result result-calendar">→ Google Calendar</span>
-            </div>
-            <div class="rule-row">
-              <span class="rule-case">Solo fecha, sin hora</span>
-              <span class="rule-result result-task">→ Google Tasks</span>
-            </div>
-            <div class="rule-row">
-              <span class="rule-case">Ambiguo</span>
-              <span class="rule-result result-review">→ Requiere revisión</span>
-            </div>
-          </div>
-        </div>
-        <div class="decision-card">
-          <div class="decision-tag">DEC-008</div>
-          <h3>Ideas en archivo acumulativo</h3>
-          <p>Las ideas no generan un archivo por cada idea. Se agregan al archivo <code>ideas.md</code> para evitar caos documental.</p>
-        </div>
-        <div class="decision-card">
-          <div class="decision-tag">DEC-006</div>
-          <h3>Servicios intercambiables</h3>
-          <p>El código no depende de OpenAI permanentemente. Cada servicio tiene una interfaz que permite cambiar de proveedor sin reescribir el pipeline.</p>
-        </div>
-        <div class="decision-card">
-          <div class="decision-tag">DEC-005</div>
-          <h3>Markdown como base de datos</h3>
-          <p>Sin base de datos relacional. Todo en Markdown plano: legible por humanos, compatible con Obsidian y Google Drive.</p>
-        </div>
-        <div class="decision-card">
-          <div class="decision-tag">DEC-004</div>
-          <h3>Local primero</h3>
-          <p>Se valida el pipeline completo localmente antes de agregar cloud, Google Drive o LangGraph. Menos variables de fallo.</p>
-        </div>
-        <div class="decision-card">
-          <div class="decision-tag">DEC-011</div>
-          <h3>No crear proyectos automáticamente</h3>
-          <p>El sistema puede sugerir proyectos, pero no los crea sin control. Evita generar proyectos basura que contaminen la base de conocimiento.</p>
-        </div>
+      <!-- The road strip (visual asphalt) -->
+      <div class="road-asphalt" id="road-asphalt">
+        <div class="road-dash" id="road-dash"></div>
       </div>
-    </div>
-  </section>
 
-  <!-- ROADMAP -->
-  <section id="roadmap" class="section">
-    <div class="container">
-      <div class="section-label">Roadmap</div>
-      <h2>Tres versiones, una visión</h2>
-      <div class="roadmap-grid">
-        <div class="roadmap-card roadmap-v1">
-          <div class="roadmap-version">V1</div>
-          <h3>Organización local completa</h3>
-          <p class="roadmap-goal">El usuario coloca un archivo y obtiene una Knowledge Base organizada automáticamente.</p>
-          <ul>
-            <li>Knowledge Base en Markdown</li>
-            <li>Separación por categoría (ideas, tareas, reuniones, recordatorios)</li>
-            <li>Servicios modulares intercambiables</li>
-            <li>Soporte MP3, TXT y MD</li>
-            <li>Google Tasks y Google Calendar</li>
-          </ul>
-          <div class="roadmap-phases">
-            <span class="phase done">Fase 0 ✓</span>
-            <span class="phase active">Fase 1</span>
-            <span class="phase">Fase 2</span>
-            <span class="phase">Fase 3</span>
-          </div>
-        </div>
-        <div class="roadmap-card roadmap-v2">
-          <div class="roadmap-version">V2</div>
-          <h3>Automatización en la nube</h3>
-          <p class="roadmap-goal">El sistema corre sin intervención desde cualquier lugar, leyendo desde Google Drive.</p>
-          <ul>
-            <li>Ingesta desde Google Drive</li>
-            <li>Escritura de Markdown en Drive</li>
-            <li>Contenerización con Docker</li>
-            <li>Deploy en Google Cloud Run</li>
-            <li>Cloud Scheduler para ejecuciones periódicas</li>
-          </ul>
-          <div class="roadmap-phases">
-            <span class="phase">Fase 4</span>
-            <span class="phase">Fase 5</span>
-          </div>
-        </div>
-        <div class="roadmap-card roadmap-v3">
-          <div class="roadmap-version">V3</div>
-          <h3>Agente consultable</h3>
-          <p class="roadmap-goal">El usuario puede preguntar sobre su conocimiento acumulado en lenguaje natural.</p>
-          <ul>
-            <li>Arquitectura multiagente con LangGraph</li>
-            <li>Búsqueda semántica sobre la Knowledge Base</li>
-            <li>Whisper local (sin costo por token)</li>
-            <li>Modelos locales via Ollama</li>
-            <li>Integraciones: Telegram, WhatsApp, web</li>
-          </ul>
-          <div class="roadmap-phases">
-            <span class="phase">Fase 6</span>
-            <span class="phase">Fase 7</span>
-            <span class="phase">Fase 8</span>
-          </div>
-        </div>
+      <!-- The car — absolutely positioned on road -->
+      <div class="road-car" id="road-car">
+        <div class="car-glow"></div>
+        <div class="car-emoji">🚗</div>
+        <div class="car-label">📍 Aquí</div>
+        <div class="car-smoke smoke-1"></div>
+        <div class="car-smoke smoke-2"></div>
       </div>
-    </div>
-  </section>
 
-  <!-- ESTADO Y PRÓXIMOS PASOS -->
-  <section id="estado" class="section section-dark">
-    <div class="container">
-      <div class="section-label">Estado actual</div>
-      <h2>¿Dónde estamos hoy?</h2>
-      <div class="status-grid">
-        <div class="status-col">
-          <h3>✅ Completado</h3>
-          <ul class="status-list done-list">
-            <li>Estructura base del proyecto</li>
-            <li>Carga de API key desde <code>.env</code></li>
-            <li>Detección de MP3 en <code>input/</code></li>
-            <li>Transcripción con <code>whisper-1</code></li>
-            <li>Análisis con <code>gpt-4o-mini</code></li>
-            <li>Generación de <code>_transcript.txt</code></li>
-            <li>Generación de <code>_analysis.md</code></li>
-            <li>Documentación técnica y funcional</li>
-          </ul>
-        </div>
-        <div class="status-col">
-          <h3>🔜 Próximos pasos</h3>
-          <ul class="status-list next-list">
-            <li>Crear estructura <code>Knowledge_Base/</code></li>
-            <li>Clasificar salida por categoría (ideas, tareas, reuniones)</li>
-            <li>Archivos acumulativos por tipo</li>
-            <li>Archivos individuales por reunión</li>
-            <li>Soporte para entradas TXT y MD</li>
-            <li>Separar lógica en servicios modulares</li>
-            <li>Integración Google Tasks</li>
-          </ul>
-        </div>
-      </div>
-      <div class="current-stack">
-        <div class="stack-title">Stack técnico actual</div>
-        <div class="stack-items">
-          <div class="stack-item">
-            <div class="stack-name">Python</div>
-            <div class="stack-role">Lenguaje base</div>
-          </div>
-          <div class="stack-sep">+</div>
-          <div class="stack-item">
-            <div class="stack-name">whisper-1</div>
-            <div class="stack-role">Transcripción — $0.006/min</div>
-          </div>
-          <div class="stack-sep">+</div>
-          <div class="stack-item">
-            <div class="stack-name">gpt-4o-mini</div>
-            <div class="stack-role">Análisis — $0.15/M tokens</div>
-          </div>
-          <div class="stack-sep">+</div>
-          <div class="stack-item">
-            <div class="stack-name">Markdown</div>
-            <div class="stack-role">Knowledge Base local</div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
+      <!-- Steps — generated by script.js -->
+      <div class="steps-list" id="steps-list"></div>
 
-  <!-- FOOTER -->
-  <footer>
-    <div class="container">
-      <div class="footer-inner">
-        <span class="footer-logo">⬡ Second Brain Agent</span>
-        <span class="footer-note">MVP local · 2026 · <code>agent_testing</code></span>
+    </div>
+
+    <!-- Destination sign at the bottom -->
+    <div class="destination-block">
+      <div class="dest-road-end"></div>
+      <div class="dest-sign">
+        <div class="sign-post-left"></div>
+        <div class="sign-board">
+          <div class="sign-icon-big">🧠</div>
+          <div class="sign-title">DESTINO FINAL</div>
+          <div class="sign-line">Agente consultable con IA</div>
+          <div class="sign-line small">Captura → Organización → Memoria → Consulta</div>
+        </div>
+        <div class="sign-post-right"></div>
       </div>
     </div>
+  </main>
+
+  <footer class="page-footer">
+    <p>Second Brain Agent · <code>agent_testing</code> · 2026 ·
+      <span id="footer-date"></span></p>
   </footer>
 
+  <script src="script.js"></script>
 </body>
 </html>

@@ -1,0 +1,908 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tech Spec — Second Brain Agent</title>
+  <style>
+    /* ── Reset & Variables ─────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #0d0f14;
+      --bg-alt:    #111318;
+      --surface:   #161a22;
+      --surface-2: #1c2130;
+      --border:    #ffffff12;
+      --accent:    #7c6ff7;
+      --accent-2:  #5b8df7;
+      --green:     #4ade80;
+      --yellow:    #fbbf24;
+      --red:       #f87171;
+      --text:      #e8eaf0;
+      --muted:     #8b90a0;
+      --dim:       #555b6e;
+      --mono:      'Cascadia Code','Fira Code','Consolas',monospace;
+      --font:      'Segoe UI',system-ui,-apple-system,sans-serif;
+      --sidebar-w: 260px;
+    }
+
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: var(--font);
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.7;
+      display: flex;
+    }
+
+    /* ── Sidebar ───────────────────────────────────────── */
+    .sidebar {
+      width: var(--sidebar-w);
+      min-height: 100vh;
+      background: var(--bg-alt);
+      border-right: 1px solid var(--border);
+      position: fixed;
+      top: 0; left: 0; bottom: 0;
+      overflow-y: auto;
+      padding: 2rem 0;
+    }
+
+    .sidebar-logo {
+      padding: 0 1.5rem 1.5rem;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 1.25rem;
+    }
+    .sidebar-logo .proj { font-weight: 800; font-size: 1rem; color: var(--text); }
+    .sidebar-logo .label { font-size: 0.72rem; color: var(--dim); text-transform: uppercase; letter-spacing: 0.1em; margin-top: 0.2rem; }
+
+    .nav-group { margin-bottom: 0.25rem; }
+    .nav-group-title {
+      font-size: 0.68rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--dim);
+      padding: 0.5rem 1.5rem 0.25rem;
+    }
+    .sidebar a {
+      display: block;
+      padding: 0.35rem 1.5rem;
+      font-size: 0.85rem;
+      color: var(--muted);
+      text-decoration: none;
+      transition: color 0.15s, background 0.15s;
+      border-left: 2px solid transparent;
+    }
+    .sidebar a:hover {
+      color: var(--text);
+      background: rgba(255,255,255,0.04);
+      border-left-color: var(--accent);
+    }
+
+    /* ── Main ──────────────────────────────────────────── */
+    .main {
+      margin-left: var(--sidebar-w);
+      max-width: 900px;
+      padding: 3rem 3rem 6rem;
+      width: 100%;
+    }
+
+    /* ── Typography ────────────────────────────────────── */
+    h1 { font-size: 2rem; font-weight: 800; letter-spacing: -0.02em; margin-bottom: 0.5rem; }
+    h2 {
+      font-size: 1.35rem; font-weight: 700; letter-spacing: -0.01em;
+      margin: 3rem 0 1rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 1px solid var(--border);
+      color: var(--text);
+    }
+    h3 { font-size: 1rem; font-weight: 700; color: var(--text); margin: 1.5rem 0 0.5rem; }
+    h4 { font-size: 0.88rem; font-weight: 600; color: var(--muted); margin: 1.25rem 0 0.4rem; text-transform: uppercase; letter-spacing: 0.06em; }
+    p  { color: var(--muted); margin-bottom: 0.75rem; font-size: 0.93rem; }
+    ul { padding-left: 1.25rem; color: var(--muted); font-size: 0.92rem; }
+    li { margin-bottom: 0.3rem; }
+    a  { color: var(--accent); text-decoration: none; }
+
+    /* ── Page header ───────────────────────────────────── */
+    .page-header { margin-bottom: 2.5rem; padding-bottom: 2rem; border-bottom: 1px solid var(--border); }
+    .page-header .badge {
+      display: inline-block;
+      background: rgba(124,111,247,0.12);
+      border: 1px solid rgba(124,111,247,0.25);
+      color: var(--accent);
+      font-size: 0.72rem; font-weight: 600;
+      letter-spacing: 0.08em; text-transform: uppercase;
+      padding: 0.3em 0.9em; border-radius: 999px;
+      margin-bottom: 1rem;
+    }
+    .page-header p { font-size: 1rem; max-width: 640px; }
+
+    /* ── Code blocks ───────────────────────────────────── */
+    pre {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1.25rem 1.5rem;
+      overflow-x: auto;
+      font-family: var(--mono);
+      font-size: 0.8rem;
+      line-height: 1.7;
+      color: var(--text);
+      margin: 0.75rem 0 1.25rem;
+    }
+    code {
+      font-family: var(--mono);
+      font-size: 0.82em;
+      background: var(--surface-2);
+      color: var(--accent);
+      padding: 0.15em 0.4em;
+      border-radius: 4px;
+    }
+    pre code { background: none; padding: 0; font-size: inherit; color: inherit; }
+
+    /* Syntax color hints */
+    .kw  { color: #c792ea; }
+    .fn  { color: #82aaff; }
+    .st  { color: #c3e88d; }
+    .cm  { color: #546e7a; font-style: italic; }
+    .cl  { color: #ffcb6b; }
+    .py  { color: #89ddff; }
+
+    /* ── Badges ────────────────────────────────────────── */
+    .tag {
+      display: inline-block;
+      font-size: 0.68rem; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.07em;
+      padding: 0.2em 0.6em; border-radius: 4px;
+      margin-right: 0.3rem;
+    }
+    .tag-impl  { background: rgba(74,222,128,0.12); color: var(--green); border: 1px solid rgba(74,222,128,0.25); }
+    .tag-phd   { background: rgba(251,191,36,0.12); color: var(--yellow); border: 1px solid rgba(251,191,36,0.25); }
+    .tag-abc   { background: rgba(91,141,247,0.12); color: var(--accent-2); border: 1px solid rgba(91,141,247,0.25); }
+
+    /* ── Cards ─────────────────────────────────────────── */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1.25rem 1.5rem;
+      margin-bottom: 1rem;
+    }
+    .card-title { font-weight: 700; color: var(--text); font-size: 0.95rem; margin-bottom: 0.3rem; }
+    .card-sub   { font-size: 0.8rem; color: var(--dim); font-family: var(--mono); margin-bottom: 0.6rem; }
+    .card p     { font-size: 0.88rem; margin-bottom: 0; }
+
+    /* ── Tables ────────────────────────────────────────── */
+    table { width: 100%; border-collapse: collapse; font-size: 0.87rem; margin-bottom: 1.25rem; }
+    th {
+      text-align: left; padding: 0.6rem 1rem;
+      background: var(--surface-2);
+      color: var(--dim); font-size: 0.72rem;
+      text-transform: uppercase; letter-spacing: 0.08em;
+      border-bottom: 1px solid var(--border);
+    }
+    td { padding: 0.65rem 1rem; border-bottom: 1px solid var(--border); vertical-align: top; color: var(--muted); }
+    td:first-child { font-family: var(--mono); color: var(--text); font-size: 0.82rem; }
+    tr:last-child td { border-bottom: none; }
+
+    /* ── Flow diagram ──────────────────────────────────── */
+    .flow {
+      display: flex; align-items: center; gap: 0.4rem;
+      flex-wrap: wrap; margin: 1rem 0 1.5rem;
+    }
+    .flow-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0.6rem 1rem;
+      font-size: 0.82rem;
+      text-align: center;
+    }
+    .flow-box .fb-title { color: var(--text); font-weight: 600; font-size: 0.85rem; }
+    .flow-box .fb-sub   { color: var(--dim); font-size: 0.72rem; font-family: var(--mono); margin-top: 0.2rem; }
+    .flow-arrow { color: var(--accent); font-size: 1.1rem; opacity: 0.5; flex-shrink: 0; }
+
+    /* ── Callout ───────────────────────────────────────── */
+    .callout {
+      border-left: 3px solid var(--accent);
+      background: rgba(124,111,247,0.06);
+      border-radius: 0 8px 8px 0;
+      padding: 0.75rem 1rem;
+      margin: 0.75rem 0 1.25rem;
+      font-size: 0.88rem;
+      color: var(--muted);
+    }
+    .callout.warn { border-color: var(--yellow); background: rgba(251,191,36,0.06); }
+
+    /* ── Status grid ───────────────────────────────────── */
+    .status-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1rem; }
+    .status-col h3 { margin-top: 0; }
+    .status-list { list-style: none; padding: 0; }
+    .status-list li { padding: 0.35rem 0; padding-left: 1.5rem; position: relative; font-size: 0.88rem; color: var(--muted); }
+    .done li::before  { content: '✓'; position: absolute; left: 0; color: var(--green); font-weight: 700; }
+    .next li::before  { content: '›'; position: absolute; left: 0; color: var(--accent); font-size: 1.1rem; line-height: 1.4; }
+
+    /* ── Glossary ──────────────────────────────────────── */
+    .glossary-item { padding: 0.9rem 0; border-bottom: 1px solid var(--border); }
+    .glossary-item:last-child { border-bottom: none; }
+    .gterm { font-family: var(--mono); font-weight: 700; color: var(--text); font-size: 0.88rem; }
+    .gdef  { font-size: 0.88rem; color: var(--muted); margin-top: 0.25rem; }
+
+    /* ── Responsive ────────────────────────────────────── */
+    @media (max-width: 900px) {
+      .sidebar { display: none; }
+      .main { margin-left: 0; padding: 2rem 1.25rem 4rem; }
+      .status-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<nav class="sidebar">
+  <div class="sidebar-logo">
+    <div class="proj">⬡ Second Brain Agent</div>
+    <div class="label">Especificación Técnica</div>
+  </div>
+
+  <div class="nav-group">
+    <div class="nav-group-title">Proyecto</div>
+    <a href="#resumen">Resumen técnico</a>
+    <a href="#arquitectura">Arquitectura general</a>
+    <a href="#carpetas">Estructura de carpetas</a>
+  </div>
+
+  <div class="nav-group">
+    <div class="nav-group-title">Componentes</div>
+    <a href="#archivos">Descripción por archivo</a>
+    <a href="#agentes">Agentes y responsabilidades</a>
+    <a href="#servicios">Servicios</a>
+  </div>
+
+  <div class="nav-group">
+    <div class="nav-group-title">Sistema</div>
+    <a href="#logica">Lógica actual</a>
+    <a href="#flujo">Flujo de ejecución</a>
+    <a href="#estado">Estado del proyecto</a>
+    <a href="#proximos">Próximos pasos</a>
+    <a href="#glosario">Glosario técnico</a>
+  </div>
+</nav>
+
+<!-- MAIN CONTENT -->
+<main class="main">
+
+  <!-- HEADER -->
+  <div class="page-header" id="top">
+    <div class="badge">Especificación Técnica · v0.1 · 2026-05-14</div>
+    <h1>Second Brain Agent</h1>
+    <p>
+      Documentación técnica del estado actual del proyecto: qué está construido,
+      qué hace cada archivo, cómo se relacionan los componentes y qué queda pendiente.
+    </p>
+  </div>
+
+  <!-- 1. RESUMEN TÉCNICO -->
+  <section id="resumen">
+    <h2>1. Resumen técnico del proyecto</h2>
+    <p>
+      Second Brain Agent es un pipeline local en Python que procesa archivos de audio MP3,
+      los transcribe usando la API de OpenAI y genera un documento Markdown estructurado
+      con ideas, tareas, recordatorios y resumen del contenido.
+    </p>
+    <p>
+      El sistema está organizado en tres capas:
+    </p>
+    <ul>
+      <li><strong>Servicios</strong> — lógica de integración con APIs externas (OpenAI Whisper, GPT-4o-mini)</li>
+      <li><strong>Agentes</strong> — coordinan y ejecutan pasos discretos del pipeline</li>
+      <li><strong>main.py</strong> — punto de entrada que instancia los componentes y lanza el orquestador</li>
+    </ul>
+
+    <h4>Stack tecnológico</h4>
+    <table>
+      <tr><th>Componente</th><th>Tecnología</th><th>Notas</th></tr>
+      <tr><td>Lenguaje</td><td>Python 3.x</td><td>Nativo, sin frameworks</td></tr>
+      <tr><td>Transcripción</td><td>OpenAI <code>whisper-1</code></td><td>~$0.006/min de audio</td></tr>
+      <tr><td>Análisis de texto</td><td>OpenAI <code>gpt-4o-mini</code></td><td>~$0.15/M tokens de entrada</td></tr>
+      <tr><td>Variables de entorno</td><td><code>python-dotenv</code></td><td>Lee desde <code>.env</code></td></tr>
+      <tr><td>Manejo de rutas</td><td><code>pathlib.Path</code></td><td>Nativo de Python</td></tr>
+      <tr><td>Mover archivos</td><td><code>shutil.move()</code></td><td>Nativo de Python</td></tr>
+    </table>
+  </section>
+
+  <!-- 2. ARQUITECTURA GENERAL -->
+  <section id="arquitectura">
+    <h2>2. Arquitectura general</h2>
+    <p>
+      El sistema sigue una arquitectura en capas con separación de responsabilidades.
+      <code>main.py</code> no contiene lógica de negocio: solo instancia servicios y lanza el agente orquestador.
+      Los agentes orquestan el flujo. Los servicios encapsulan las integraciones externas.
+    </p>
+
+    <div class="flow">
+      <div class="flow-box">
+        <div class="fb-title">main.py</div>
+        <div class="fb-sub">Entry point</div>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-box">
+        <div class="fb-title">OrchestratorAgent</div>
+        <div class="fb-sub">Coordina el pipeline</div>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-box">
+        <div class="fb-title">TranscriptionAgent</div>
+        <div class="fb-sub">whisper-1</div>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-box">
+        <div class="fb-title">AnalysisAgent</div>
+        <div class="fb-sub">gpt-4o-mini</div>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-box">
+        <div class="fb-title">MarkdownAgent</div>
+        <div class="fb-sub">Guarda .md</div>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-box">
+        <div class="fb-title">ArchiveAgent</div>
+        <div class="fb-sub">Mueve MP3</div>
+      </div>
+    </div>
+
+    <p>
+      Los servicios siguen el patrón <strong>Clase Base Abstracta (ABC)</strong>:
+      cada proveedor (ej. OpenAI) implementa una interfaz genérica.
+      Esto permite cambiar de proveedor sin modificar los agentes ni <code>main.py</code>.
+    </p>
+
+    <pre><code><span class="cm"># Interfaz</span>
+<span class="cl">TranscriptionService</span> (ABC)
+    └── <span class="cl">OpenAITranscriptionService</span>    <span class="cm"># implementación actual</span>
+    └── <span class="cl">LocalWhisperTranscriptionService</span>  <span class="cm"># futura</span>
+
+<span class="cl">AnalysisService</span> (ABC)
+    └── <span class="cl">OpenAIAnalysisService</span>          <span class="cm"># implementación actual</span>
+    └── <span class="cl">LocalModelAnalysisService</span>         <span class="cm"># futura (Ollama)</span></code></pre>
+  </section>
+
+  <!-- 3. ESTRUCTURA DE CARPETAS -->
+  <section id="carpetas">
+    <h2>3. Estructura de carpetas</h2>
+
+    <pre><code>agent_testing/
+├── agents/                         <span class="cm"># Capa de agentes</span>
+│   ├── __init__.py
+│   ├── orchestrator_agent.py       <span class="cm"># Coordina todo el flujo</span>
+│   ├── transcription_agent.py      <span class="cm"># Delega a TranscriptionService</span>
+│   ├── analysis_agent.py           <span class="cm"># Delega a AnalysisService</span>
+│   ├── markdown_agent.py           <span class="cm"># Asegura y guarda el Markdown</span>
+│   └── archive_agent.py            <span class="cm"># Mueve MP3 a processed/</span>
+│
+├── services/                       <span class="cm"># Capa de integración con APIs</span>
+│   ├── file_service.py             <span class="cm"># find_mp3(), save_text()</span>
+│   ├── markdown_service.py         <span class="cm"># ensure_transcript(), save_markdown()</span>
+│   ├── transcription/
+│   │   ├── __init__.py
+│   │   ├── base.py                 <span class="cm"># TranscriptionService (ABC)</span>
+│   │   └── openai_transcription.py <span class="cm"># OpenAITranscriptionService</span>
+│   └── analysis/
+│       ├── __init__.py
+│       ├── base.py                 <span class="cm"># AnalysisService (ABC)</span>
+│       └── openai_analysis.py      <span class="cm"># OpenAIAnalysisService + PROMPT_TEMPLATE</span>
+│
+├── input/                          <span class="cm"># MP3 de entrada</span>
+├── output/                         <span class="cm"># Transcripts y Markdown generados</span>
+├── processed/                      <span class="cm"># MP3 ya procesados</span>
+├── prompts/                        <span class="cm"># Reservado para prompts externos (vacío)</span>
+├── docs/                           <span class="cm"># Documentación del proyecto</span>
+├── site/                           <span class="cm"># Sitios HTML estáticos</span>
+├── main.py                         <span class="cm"># Entry point</span>
+├── requirements.txt
+├── .env.example
+├── .gitignore
+├── CLAUDE.md
+└── README.md</code></pre>
+
+    <h4>Carpetas de datos</h4>
+    <table>
+      <tr><th>Carpeta</th><th>Contenido</th><th>Generado por</th></tr>
+      <tr><td>input/</td><td>MP3 sin procesar</td><td>Usuario</td></tr>
+      <tr><td>output/</td><td><code>*_transcript.txt</code>, <code>*_analysis.md</code></td><td>Pipeline</td></tr>
+      <tr><td>processed/</td><td>MP3 procesados exitosamente</td><td><code>ArchiveAgent</code></td></tr>
+      <tr><td>prompts/</td><td>Vacío — reservado para prompts como archivos externos</td><td>—</td></tr>
+    </table>
+  </section>
+
+  <!-- 4. DESCRIPCIÓN POR ARCHIVO -->
+  <section id="archivos">
+    <h2>4. Descripción archivo por archivo</h2>
+
+    <!-- main.py -->
+    <div class="card">
+      <div class="card-title">main.py <span class="tag tag-impl">Implementado</span></div>
+      <div class="card-sub">Raíz del proyecto · Entry point</div>
+      <p>
+        Punto de entrada del sistema. No contiene lógica de negocio.
+        Solo carga la API key, instancia los servicios y lanza el <code>OrchestratorAgent</code>.
+      </p>
+      <pre><code><span class="cm"># Responsabilidades de main.py</span>
+<span class="fn">load_dotenv</span>()                           <span class="cm"># carga .env</span>
+api_key = os.<span class="fn">getenv</span>(<span class="st">"OPENAI_API_KEY"</span>)    <span class="cm"># valida la key</span>
+transcription_svc = <span class="cl">OpenAITranscriptionService</span>(api_key)
+analysis_svc = <span class="cl">OpenAIAnalysisService</span>(api_key)
+orchestrator = <span class="cl">OrchestratorAgent</span>(...)
+orchestrator.<span class="fn">run</span>()</code></pre>
+    </div>
+
+    <!-- orchestrator_agent.py -->
+    <div class="card">
+      <div class="card-title">agents/orchestrator_agent.py <span class="tag tag-impl">Implementado</span></div>
+      <div class="card-sub">Clase: OrchestratorAgent</div>
+      <p>
+        Coordina el pipeline completo. Instancia los 4 agentes hijos y los llama en orden.
+        Si la transcripción, el análisis o el guardado del Markdown falla, atrapa la excepción
+        y <strong>no mueve el MP3</strong>, dejándolo en <code>input/</code> para revisión manual.
+      </p>
+      <pre><code><span class="kw">class</span> <span class="cl">OrchestratorAgent</span>:
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, transcription_svc, analysis_svc, input_dir, output_dir, processed_dir)
+    <span class="kw">def</span> <span class="fn">run</span>(self) -> None
+        <span class="cm"># 1. find_mp3(input_dir)</span>
+        <span class="cm"># 2. try:</span>
+        <span class="cm">#      TranscriptionAgent.run() → save transcript</span>
+        <span class="cm">#      AnalysisAgent.run()     → MarkdownAgent.run()</span>
+        <span class="cm"># 3. except Exception → imprime error, NO mueve archivo</span>
+        <span class="cm"># 4. ArchiveAgent.run()  ← solo si todo tuvo éxito</span></code></pre>
+    </div>
+
+    <!-- transcription_agent.py -->
+    <div class="card">
+      <div class="card-title">agents/transcription_agent.py <span class="tag tag-impl">Implementado</span></div>
+      <div class="card-sub">Clase: TranscriptionAgent</div>
+      <p>
+        Agente delgado. Recibe un <code>TranscriptionService</code> en su constructor
+        y delega la transcripción sin añadir lógica propia.
+      </p>
+      <pre><code><span class="kw">class</span> <span class="cl">TranscriptionAgent</span>:
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, service: <span class="cl">TranscriptionService</span>)
+    <span class="kw">def</span> <span class="fn">run</span>(self, mp3_path: Path) -> <span class="py">str</span></code></pre>
+    </div>
+
+    <!-- analysis_agent.py -->
+    <div class="card">
+      <div class="card-title">agents/analysis_agent.py <span class="tag tag-impl">Implementado</span></div>
+      <div class="card-sub">Clase: AnalysisAgent</div>
+      <p>
+        Agente delgado. Recibe un <code>AnalysisService</code> en su constructor
+        y delega el análisis del transcript.
+      </p>
+      <pre><code><span class="kw">class</span> <span class="cl">AnalysisAgent</span>:
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, service: <span class="cl">AnalysisService</span>)
+    <span class="kw">def</span> <span class="fn">run</span>(self, transcript: <span class="py">str</span>) -> <span class="py">str</span></code></pre>
+    </div>
+
+    <!-- markdown_agent.py -->
+    <div class="card">
+      <div class="card-title">agents/markdown_agent.py <span class="tag tag-impl">Implementado</span></div>
+      <div class="card-sub">Clase: MarkdownAgent</div>
+      <p>
+        Verifica que el Markdown incluya el transcript completo y lo guarda en <code>output/</code>
+        como <code>&lt;stem&gt;_analysis.md</code>.
+      </p>
+      <pre><code><span class="kw">class</span> <span class="cl">MarkdownAgent</span>:
+    <span class="kw">def</span> <span class="fn">run</span>(self, output_dir: Path, stem: <span class="py">str</span>, transcript: <span class="py">str</span>, markdown: <span class="py">str</span>) -> None
+        <span class="cm"># ensure_transcript(markdown, transcript)</span>
+        <span class="cm"># save_markdown(output_dir / f"{stem}_analysis.md", markdown)</span></code></pre>
+    </div>
+
+    <!-- archive_agent.py -->
+    <div class="card">
+      <div class="card-title">agents/archive_agent.py <span class="tag tag-impl">Implementado</span></div>
+      <div class="card-sub">Clase: ArchiveAgent</div>
+      <p>
+        Mueve el MP3 procesado de <code>input/</code> a <code>processed/</code>.
+        Si la carpeta no existe, la crea. Si el archivo destino ya existe,
+        agrega un timestamp al nombre para evitar sobreescribir.
+        Solo se ejecuta si el pipeline completo tuvo éxito.
+      </p>
+      <pre><code><span class="kw">class</span> <span class="cl">ArchiveAgent</span>:
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, processed_dir: Path)
+    <span class="kw">def</span> <span class="fn">run</span>(self, mp3_path: Path) -> None
+        <span class="cm"># processed_dir.mkdir(exist_ok=True)</span>
+        <span class="cm"># dest = processed_dir / mp3_path.name</span>
+        <span class="cm"># if dest.exists(): agrega timestamp → "archivo_20260514_204852.mp3"</span>
+        <span class="cm"># shutil.move(mp3_path, dest)</span></code></pre>
+    </div>
+
+    <!-- file_service.py -->
+    <div class="card">
+      <div class="card-title">services/file_service.py <span class="tag tag-impl">Implementado</span></div>
+      <div class="card-sub">Funciones independientes (sin clase)</div>
+      <pre><code><span class="kw">def</span> <span class="fn">find_mp3</span>(input_dir: Path) -> Path
+    <span class="cm"># Busca *.mp3 en input_dir</span>
+    <span class="cm"># Retorna el primero encontrado o llama exit(1)</span>
+
+<span class="kw">def</span> <span class="fn">save_text</span>(path: Path, content: <span class="py">str</span>) -> None
+    <span class="cm"># Escribe content en path con encoding utf-8</span></code></pre>
+    </div>
+
+    <!-- markdown_service.py -->
+    <div class="card">
+      <div class="card-title">services/markdown_service.py <span class="tag tag-impl">Implementado</span></div>
+      <div class="card-sub">Funciones independientes (sin clase)</div>
+      <pre><code><span class="kw">def</span> <span class="fn">ensure_transcript</span>(markdown: <span class="py">str</span>, transcript: <span class="py">str</span>) -> <span class="py">str</span>
+    <span class="cm"># Si transcript no está en markdown, lo agrega al final</span>
+    <span class="cm"># Garantiza que el transcript completo siempre esté en el .md</span>
+
+<span class="kw">def</span> <span class="fn">save_markdown</span>(path: Path, content: <span class="py">str</span>) -> None
+    <span class="cm"># Escribe el Markdown en disco</span></code></pre>
+    </div>
+
+    <!-- transcription/base.py -->
+    <div class="card">
+      <div class="card-title">services/transcription/base.py <span class="tag tag-abc">Interfaz</span></div>
+      <div class="card-sub">Clase abstracta: TranscriptionService</div>
+      <p>Define el contrato que debe cumplir cualquier proveedor de transcripción.</p>
+      <pre><code><span class="kw">class</span> <span class="cl">TranscriptionService</span>(ABC):
+    <span class="py">@abstractmethod</span>
+    <span class="kw">def</span> <span class="fn">transcribe</span>(self, mp3_path: Path) -> <span class="py">str</span>: ...</code></pre>
+    </div>
+
+    <!-- openai_transcription.py -->
+    <div class="card">
+      <div class="card-title">services/transcription/openai_transcription.py <span class="tag tag-impl">Implementado</span></div>
+      <div class="card-sub">Clase: OpenAITranscriptionService(TranscriptionService)</div>
+      <p>Implementación concreta de <code>TranscriptionService</code> usando OpenAI Whisper API.</p>
+      <pre><code><span class="kw">class</span> <span class="cl">OpenAITranscriptionService</span>(<span class="cl">TranscriptionService</span>):
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, api_key: <span class="py">str</span>)
+        self.client = <span class="cl">OpenAI</span>(api_key=api_key)
+
+    <span class="kw">def</span> <span class="fn">transcribe</span>(self, mp3_path: Path) -> <span class="py">str</span>
+        <span class="cm"># Abre el archivo en modo binario</span>
+        <span class="cm"># client.audio.transcriptions.create(model="whisper-1", file=audio_file)</span>
+        <span class="cm"># Retorna response.text</span></code></pre>
+    </div>
+
+    <!-- analysis/base.py -->
+    <div class="card">
+      <div class="card-title">services/analysis/base.py <span class="tag tag-abc">Interfaz</span></div>
+      <div class="card-sub">Clase abstracta: AnalysisService</div>
+      <p>Define el contrato para cualquier proveedor de análisis de texto.</p>
+      <pre><code><span class="kw">class</span> <span class="cl">AnalysisService</span>(ABC):
+    <span class="py">@abstractmethod</span>
+    <span class="kw">def</span> <span class="fn">analyze</span>(self, transcript: <span class="py">str</span>) -> <span class="py">str</span>: ...</code></pre>
+    </div>
+
+    <!-- openai_analysis.py -->
+    <div class="card">
+      <div class="card-title">services/analysis/openai_analysis.py <span class="tag tag-impl">Implementado</span></div>
+      <div class="card-sub">Clase: OpenAIAnalysisService(AnalysisService) + PROMPT_TEMPLATE</div>
+      <p>Implementación concreta de <code>AnalysisService</code> usando GPT-4o-mini.</p>
+      <pre><code>PROMPT_TEMPLATE = <span class="st">"""Analiza el siguiente transcript...
+Responde SOLO con Markdown con estas secciones:
+# Título sugerido
+## Resumen
+## Ideas detectadas
+## Tareas accionables
+## Proyectos relacionados
+## Recordatorios
+## Tags
+## Transcript completo"""</span>
+
+<span class="kw">class</span> <span class="cl">OpenAIAnalysisService</span>(<span class="cl">AnalysisService</span>):
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, api_key: <span class="py">str</span>)
+    <span class="kw">def</span> <span class="fn">analyze</span>(self, transcript: <span class="py">str</span>) -> <span class="py">str</span>
+        <span class="cm"># Construye prompt con PROMPT_TEMPLATE.format(transcript=transcript)</span>
+        <span class="cm"># client.chat.completions.create(model="gpt-4o-mini", messages=[...])</span>
+        <span class="cm"># Retorna response.choices[0].message.content</span></code></pre>
+    </div>
+  </section>
+
+  <!-- 5. AGENTES -->
+  <section id="agentes">
+    <h2>5. Agentes y responsabilidades</h2>
+
+    <table>
+      <tr><th>Agente</th><th>Estado</th><th>Responsabilidad</th><th>Método</th></tr>
+      <tr>
+        <td>OrchestratorAgent</td>
+        <td><span class="tag tag-impl">Implementado</span></td>
+        <td>Coordina el flujo completo. Maneja errores y decide si archivar.</td>
+        <td><code>run()</code></td>
+      </tr>
+      <tr>
+        <td>TranscriptionAgent</td>
+        <td><span class="tag tag-impl">Implementado</span></td>
+        <td>Delega la transcripción al servicio configurado.</td>
+        <td><code>run(mp3_path)</code></td>
+      </tr>
+      <tr>
+        <td>AnalysisAgent</td>
+        <td><span class="tag tag-impl">Implementado</span></td>
+        <td>Delega el análisis del transcript al servicio configurado.</td>
+        <td><code>run(transcript)</code></td>
+      </tr>
+      <tr>
+        <td>MarkdownAgent</td>
+        <td><span class="tag tag-impl">Implementado</span></td>
+        <td>Garantiza que el Markdown incluya el transcript y lo guarda en disco.</td>
+        <td><code>run(output_dir, stem, transcript, markdown)</code></td>
+      </tr>
+      <tr>
+        <td>ArchiveAgent</td>
+        <td><span class="tag tag-impl">Implementado</span></td>
+        <td>Mueve el MP3 procesado a <code>processed/</code>, con deduplicación por timestamp.</td>
+        <td><code>run(mp3_path)</code></td>
+      </tr>
+    </table>
+
+    <div class="callout">
+      Todos los agentes actuales son <strong>síncronos y secuenciales</strong>.
+      En una futura versión con LangGraph, cada agente se puede convertir en un nodo del grafo
+      con manejo de estado y rutas condicionales entre nodos.
+    </div>
+  </section>
+
+  <!-- 6. SERVICIOS -->
+  <section id="servicios">
+    <h2>6. Servicios</h2>
+
+    <table>
+      <tr><th>Servicio</th><th>Tipo</th><th>Proveedor actual</th><th>Proveedor futuro</th></tr>
+      <tr>
+        <td>TranscriptionService</td>
+        <td>ABC</td>
+        <td><code>OpenAITranscriptionService</code><br><small>whisper-1</small></td>
+        <td><code>LocalWhisperTranscriptionService</code></td>
+      </tr>
+      <tr>
+        <td>AnalysisService</td>
+        <td>ABC</td>
+        <td><code>OpenAIAnalysisService</code><br><small>gpt-4o-mini</small></td>
+        <td><code>LocalModelAnalysisService</code> (Ollama)</td>
+      </tr>
+      <tr>
+        <td>file_service</td>
+        <td>Funciones</td>
+        <td><code>find_mp3()</code>, <code>save_text()</code></td>
+        <td>—</td>
+      </tr>
+      <tr>
+        <td>markdown_service</td>
+        <td>Funciones</td>
+        <td><code>ensure_transcript()</code>, <code>save_markdown()</code></td>
+        <td>—</td>
+      </tr>
+    </table>
+
+    <p>
+      El diseño con ABC garantiza que cambiar de proveedor solo requiere:
+      1) crear una nueva clase que herede la base, y 2) cambiar una línea en <code>main.py</code>.
+      Los agentes y el orquestador no necesitan modificarse.
+    </p>
+  </section>
+
+  <!-- 7. LÓGICA ACTUAL -->
+  <section id="logica">
+    <h2>7. Lógica actual del sistema</h2>
+
+    <h3>Entrada soportada</h3>
+    <p>Actualmente solo se procesan archivos <strong>MP3</strong>. El sistema toma el primer archivo <code>*.mp3</code> encontrado en <code>input/</code>.</p>
+
+    <div class="callout warn">
+      TXT y MD aún no están soportados como entradas aunque están en el roadmap de V1.
+    </div>
+
+    <h3>Prompt de análisis</h3>
+    <p>
+      El prompt vive como constante <code>PROMPT_TEMPLATE</code> en
+      <code>services/analysis/openai_analysis.py</code>.
+      Le indica al modelo que genere estas 8 secciones exactas:
+    </p>
+    <ul>
+      <li><code># Título sugerido</code></li>
+      <li><code>## Resumen</code></li>
+      <li><code>## Ideas detectadas</code></li>
+      <li><code>## Tareas accionables</code></li>
+      <li><code>## Proyectos relacionados</code></li>
+      <li><code>## Recordatorios</code></li>
+      <li><code>## Tags</code></li>
+      <li><code>## Transcript completo</code></li>
+    </ul>
+    <p>La instrucción explícita es: si no detecta información en una sección, escribir "No detectado". No inventar.</p>
+
+    <h3>Manejo de errores</h3>
+    <p>
+      El <code>OrchestratorAgent</code> envuelve los pasos de transcripción, análisis y guardado
+      en un bloque <code>try/except</code>. Si cualquier paso falla:
+    </p>
+    <ul>
+      <li>Se imprime el error en terminal.</li>
+      <li>El MP3 original permanece en <code>input/</code> sin modificación.</li>
+      <li>No se llama a <code>ArchiveAgent</code>.</li>
+    </ul>
+
+    <h3>Deduplicación en archive</h3>
+    <p>
+      Si ya existe un archivo con el mismo nombre en <code>processed/</code>,
+      <code>ArchiveAgent</code> agrega un timestamp al nombre:
+      <code>nota_20260514_204852.mp3</code>.
+    </p>
+  </section>
+
+  <!-- 8. FLUJO DE EJECUCIÓN -->
+  <section id="flujo">
+    <h2>8. Flujo esperado de ejecución</h2>
+
+    <pre><code>$ python main.py
+
+<span class="cm"># main.py</span>
+API key loaded successfully
+
+<span class="cm"># OrchestratorAgent → find_mp3()</span>
+MP3 file found: nota_prueba.mp3
+
+<span class="cm"># TranscriptionAgent → OpenAITranscriptionService.transcribe()</span>
+Transcribing...
+
+--- Transcript ---
+&lt;texto transcrito del audio&gt;
+
+<span class="cm"># file_service.save_text()</span>
+Saved: output/nota_prueba_transcript.txt
+
+<span class="cm"># AnalysisAgent → OpenAIAnalysisService.analyze()</span>
+Analyzing transcript...
+
+<span class="cm"># MarkdownAgent → ensure_transcript() + save_markdown()</span>
+Analysis saved to: output/nota_prueba_analysis.md
+
+<span class="cm"># ArchiveAgent → shutil.move()</span>
+[ArchiveAgent] Moved to: processed/nota_prueba.mp3</code></pre>
+
+    <h3>Salida generada</h3>
+    <table>
+      <tr><th>Archivo</th><th>Contenido</th></tr>
+      <tr><td>output/&lt;stem&gt;_transcript.txt</td><td>Texto plano tal como lo devolvió Whisper</td></tr>
+      <tr><td>output/&lt;stem&gt;_analysis.md</td><td>Markdown con las 8 secciones estructuradas</td></tr>
+      <tr><td>processed/&lt;stem&gt;.mp3</td><td>MP3 original movido (o con timestamp si ya existía)</td></tr>
+    </table>
+  </section>
+
+  <!-- 9. ESTADO ACTUAL -->
+  <section id="estado">
+    <h2>9. Estado actual del proyecto</h2>
+
+    <div class="status-grid">
+      <div class="status-col">
+        <h3>✅ Implementado</h3>
+        <ul class="status-list done">
+          <li>Estructura base del proyecto</li>
+          <li>Carga de <code>OPENAI_API_KEY</code> desde <code>.env</code></li>
+          <li>Detección de MP3 en <code>input/</code></li>
+          <li>Transcripción con <code>whisper-1</code></li>
+          <li>Guardado de transcript en <code>output/</code></li>
+          <li>Análisis con <code>gpt-4o-mini</code></li>
+          <li>Generación de Markdown estructurado</li>
+          <li>Guardado de <code>_analysis.md</code> en <code>output/</code></li>
+          <li>Archivado de MP3 en <code>processed/</code></li>
+          <li>Deduplicación por timestamp en archive</li>
+          <li>Manejo de errores en el pipeline</li>
+          <li>Arquitectura de servicios intercambiables (ABC)</li>
+          <li>Capa de agentes separada</li>
+          <li>Documentación técnica y funcional en <code>docs/</code></li>
+        </ul>
+      </div>
+      <div class="status-col">
+        <h3>🔜 Pendiente</h3>
+        <ul class="status-list next">
+          <li>Soporte de entrada TXT y MD</li>
+          <li>Estructura <code>Knowledge_Base/</code></li>
+          <li>Clasificación por categoría (idea, tarea, reunión, etc.)</li>
+          <li>Archivos acumulativos (<code>ideas.md</code>, <code>tasks.md</code>)</li>
+          <li>Archivos individuales por reunión</li>
+          <li>Archivo maestro de proyectos</li>
+          <li>Integración con Google Tasks</li>
+          <li>Integración con Google Calendar</li>
+          <li>Prompts como archivos externos en <code>prompts/</code></li>
+          <li><code>LocalWhisperTranscriptionService</code></li>
+          <li><code>LocalModelAnalysisService</code> (Ollama)</li>
+          <li>Google Drive como fuente de entrada</li>
+          <li>Cloud Run + Scheduler</li>
+          <li>LangGraph multiagente</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- 10. PRÓXIMOS PASOS -->
+  <section id="proximos">
+    <h2>10. Próximos pasos técnicos</h2>
+
+    <h3>V1 — Organización local (siguiente fase)</h3>
+    <ul>
+      <li>Crear estructura <code>Knowledge_Base/</code> con subcarpetas por categoría</li>
+      <li>Actualizar el prompt de análisis para que clasifique el tipo de contenido</li>
+      <li>Separar la salida del análisis en archivos acumulativos según categoría</li>
+      <li>Soporte de entrada para archivos TXT y MD además de MP3</li>
+      <li>Mover prompts a archivos externos en <code>prompts/</code></li>
+    </ul>
+
+    <h3>V1.5 — Reducción de costos</h3>
+    <ul>
+      <li>Implementar <code>LocalWhisperTranscriptionService</code> (transcripción sin costo por token)</li>
+      <li>Integración con Google Tasks y Google Calendar</li>
+    </ul>
+
+    <h3>V2 — Cloud</h3>
+    <ul>
+      <li>Contenerización con Docker</li>
+      <li>Lectura desde Google Drive (<code>Second_Brain/Inbox/</code>)</li>
+      <li>Deploy en Cloud Run + Cloud Scheduler</li>
+    </ul>
+
+    <h3>V3 — Agentes avanzados</h3>
+    <ul>
+      <li>Migración a LangGraph (cada agente actual se convierte en un nodo)</li>
+      <li><code>LocalModelAnalysisService</code> via Ollama</li>
+      <li>Indexación semántica de <code>Knowledge_Base/</code></li>
+      <li>Interfaz consultable en lenguaje natural</li>
+    </ul>
+  </section>
+
+  <!-- 11. GLOSARIO -->
+  <section id="glosario">
+    <h2>11. Glosario técnico</h2>
+
+    <div class="glossary-item">
+      <div class="gterm">ABC (Abstract Base Class)</div>
+      <div class="gdef">Clase abstracta en Python que define una interfaz. No se puede instanciar directamente; obliga a que las subclases implementen sus métodos abstractos. Se usa aquí para definir los contratos de <code>TranscriptionService</code> y <code>AnalysisService</code>.</div>
+    </div>
+    <div class="glossary-item">
+      <div class="gterm">OrchestratorAgent</div>
+      <div class="gdef">Agente principal que coordina el flujo completo del pipeline. Es el único que conoce a los demás agentes y decide el orden de ejecución y qué hacer en caso de error.</div>
+    </div>
+    <div class="glossary-item">
+      <div class="gterm">whisper-1</div>
+      <div class="gdef">Modelo de transcripción de audio de OpenAI. Convierte audio en texto. Costo aproximado: $0.006 por minuto de audio.</div>
+    </div>
+    <div class="glossary-item">
+      <div class="gterm">gpt-4o-mini</div>
+      <div class="gdef">Modelo de lenguaje de OpenAI utilizado para analizar el transcript y generar el Markdown. Es el modelo más económico de la familia GPT-4o (~$0.15 por millón de tokens de entrada).</div>
+    </div>
+    <div class="glossary-item">
+      <div class="gterm">PROMPT_TEMPLATE</div>
+      <div class="gdef">Constante en <code>services/analysis/openai_analysis.py</code> que define las instrucciones enviadas a GPT-4o-mini. Incluye la estructura de secciones esperada en el Markdown de salida.</div>
+    </div>
+    <div class="glossary-item">
+      <div class="gterm">python-dotenv</div>
+      <div class="gdef">Librería que carga variables de entorno desde un archivo <code>.env</code> local. Evita hardcodear credenciales en el código.</div>
+    </div>
+    <div class="glossary-item">
+      <div class="gterm">pathlib.Path</div>
+      <div class="gdef">Clase nativa de Python para manipular rutas de sistema de archivos de forma portable entre sistemas operativos.</div>
+    </div>
+    <div class="glossary-item">
+      <div class="gterm">shutil.move()</div>
+      <div class="gdef">Función nativa de Python que mueve un archivo de una ubicación a otra, incluso entre volúmenes distintos. Usada por <code>ArchiveAgent</code> para mover MP3 a <code>processed/</code>.</div>
+    </div>
+    <div class="glossary-item">
+      <div class="gterm">stem</div>
+      <div class="gdef">Nombre del archivo sin extensión. Ejemplo: <code>Path("nota_prueba.mp3").stem</code> retorna <code>"nota_prueba"</code>. Usado para nombrar los archivos de salida.</div>
+    </div>
+    <div class="glossary-item">
+      <div class="gterm">Knowledge_Base</div>
+      <div class="gdef">Estructura de carpetas planificada para V1 donde se organizará el conocimiento procesado: ideas, tareas, reuniones, recordatorios y proyectos. Aún no implementada.</div>
+    </div>
+    <div class="glossary-item">
+      <div class="gterm">LangGraph</div>
+      <div class="gdef">Framework de orquestación de agentes basado en grafos de estado. Está en el roadmap de V3 para reemplazar el pipeline secuencial actual con un grafo de nodos con rutas condicionales.</div>
+    </div>
+  </section>
+
+</main>
+</body>
+</html>
