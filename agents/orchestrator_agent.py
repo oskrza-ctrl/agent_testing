@@ -19,6 +19,7 @@ class OrchestratorAgent:
         analysis_svc: AnalysisService,
         input_dir: Path,
         output_dir: Path,
+        processed_dir: Path,
     ):
         self.input_dir = input_dir
         self.output_dir = output_dir
@@ -26,19 +27,23 @@ class OrchestratorAgent:
         self.transcription_agent = TranscriptionAgent(transcription_svc)
         self.analysis_agent = AnalysisAgent(analysis_svc)
         self.markdown_agent = MarkdownAgent()
-        self.archive_agent = ArchiveAgent()
+        self.archive_agent = ArchiveAgent(processed_dir)
 
     def run(self) -> None:
-        # 1. Buscar MP3
         mp3_path = find_mp3(self.input_dir)
 
-        # 2. Transcribir y guardar transcript
-        transcript = self.transcription_agent.run(mp3_path)
-        save_text(self.output_dir / f"{mp3_path.stem}_transcript.txt", transcript)
+        # If any step fails, the MP3 stays in input/ for manual review
+        try:
+            transcript = self.transcription_agent.run(mp3_path)
+            save_text(self.output_dir / f"{mp3_path.stem}_transcript.txt", transcript)
 
-        # 3. Analizar y guardar Markdown
-        markdown = self.analysis_agent.run(transcript)
-        self.markdown_agent.run(self.output_dir, mp3_path.stem, transcript, markdown)
+            markdown = self.analysis_agent.run(transcript)
+            self.markdown_agent.run(self.output_dir, mp3_path.stem, transcript, markdown)
 
-        # 4. Archivar (placeholder)
+        except Exception as e:
+            print(f"\n[OrchestratorAgent] Error during processing: {e}")
+            print("[OrchestratorAgent] File was NOT moved. Check input/ for the original.")
+            return
+
+        # Only archive after a successful run
         self.archive_agent.run(mp3_path)

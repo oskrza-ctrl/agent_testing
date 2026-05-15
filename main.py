@@ -24,6 +24,7 @@ orchestrator = OrchestratorAgent(
     analysis_svc=analysis_svc,
     input_dir=Path("input"),
     output_dir=Path("output"),
+    processed_dir=Path("processed"),
 )
 
 orchestrator.run()
