@@ -1,12 +1,11 @@
 from dotenv import load_dotenv
 from pathlib import Path
-from openai import OpenAI
 import os
 
 from services.file_service import find_mp3, save_text
-from services.transcription_service import transcribe
-from services.analysis_service import analyze
 from services.markdown_service import ensure_transcript, save_markdown
+from services.transcription.openai_transcription import OpenAITranscriptionService
+from services.analysis.openai_analysis import OpenAIAnalysisService
 
 load_dotenv()
 
@@ -18,18 +17,20 @@ if not api_key:
 
 print("API key loaded successfully")
 
-client = OpenAI(api_key=api_key)
 input_dir = Path("input")
 output_dir = Path("output")
+
+transcription_svc = OpenAITranscriptionService(api_key)
+analysis_svc = OpenAIAnalysisService(api_key)
 
 # Buscar MP3
 mp3_path = find_mp3(input_dir)
 
-# Transcribir
-transcript = transcribe(client, mp3_path)
+# Transcribir y guardar transcript
+transcript = transcription_svc.transcribe(mp3_path)
 save_text(output_dir / f"{mp3_path.stem}_transcript.txt", transcript)
 
 # Analizar y guardar Markdown
-markdown = analyze(client, transcript)
+markdown = analysis_svc.analyze(transcript)
 markdown = ensure_transcript(markdown, transcript)
 save_markdown(output_dir / f"{mp3_path.stem}_analysis.md", markdown)
