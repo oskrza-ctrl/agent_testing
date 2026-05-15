@@ -225,24 +225,14 @@ output/
 
 **Objetivo:** mover el MP3 procesado a una carpeta de archivos procesados.
 
-**Estado:** Pendiente.
+**Estado:** Completado.
 
-Flujo esperado:
+Implementado en `agents/archive_agent.py`:
 
-```text
-input/audio.mp3
-↓
-procesar
-↓
-processed/audio.mp3
-```
-
-Reglas:
-
-- Crear carpeta `processed/` si no existe.
-- Mover el MP3 solo si el proceso fue exitoso.
-- No mover el archivo si ocurre error.
-- Evitar sobreescribir archivos con el mismo nombre.
+- Crea `processed/` si no existe.
+- Mueve el MP3 solo si todos los pasos anteriores fueron exitosos.
+- Si ya existe un archivo con el mismo nombre, agrega timestamp para evitar sobreescribir.
+- Integrado en `OrchestratorAgent` como último paso del pipeline.
 
 ---
 
@@ -250,17 +240,16 @@ Reglas:
 
 **Objetivo:** definir reglas permanentes de trabajo para Claude Code.
 
-**Estado:** Pendiente.
+**Estado:** Completado.
 
-Instrucciones a incluir:
+`CLAUDE.md` contiene sección de Coding Guidelines con:
 
-- Mantener el código simple y claro.
-- Agregar comentarios breves donde sean útiles.
+- Código simple, claro y sin sobre-ingeniería.
+- Comentarios breves donde ayuden a entender la intención.
 - No implementar múltiples cambios grandes en una sola iteración.
 - Explicar el plan antes de modificar código.
 - Resumir cambios después de modificar código.
 - No cambiar comportamiento existente sin avisar.
-- Sugerir actualización de documentación cuando cambie el alcance.
 
 ---
 
@@ -268,39 +257,32 @@ Instrucciones a incluir:
 
 **Objetivo:** convertir los agentes simples en agentes con instrucciones, reglas y criterios propios.
 
-**Estado:** Pendiente.
+**Estado:** Completado.
 
-Estructura esperada:
+Archivos creados en `prompts/`:
 
 ```text
 prompts/
 ├── orchestrator_agent.md
 ├── analysis_agent.md
-├── task_extraction_agent.md
-├── meeting_summary_agent.md
-└── markdown_writer_agent.md
+├── transcription_agent.md
+├── markdown_agent.md
+└── archive_agent.md
 ```
 
-Ejemplo de comportamiento esperado:
-
-```text
-Analysis Agent:
-- Clasificar contenido.
-- Detectar tareas.
-- Detectar recordatorios.
-- Detectar proyecto relacionado.
-- Marcar información ambigua como “requiere revisión”.
-```
+El `AnalysisAgent` carga `analysis_agent.md` al inicializarse via `services/prompt_loader.py`
+y ensambla el prompt completo antes de enviarlo a OpenAI. El servicio recibe el prompt
+ya armado y devuelve un `AnalysisResult` estructurado (JSON).
 
 ---
 
 ## 11. Clasificación real por tipo de contenido
 
-**Objetivo:** dejar de generar un Markdown genérico y clasificar cada entrada según su propósito.
+**Objetivo:** clasificar cada entrada en una categoría principal y extraer elementos secundarios.
 
-**Estado:** Pendiente.
+**Estado:** Completado.
 
-Categorías oficiales:
+Categorías implementadas:
 
 ```text
 - Idea
@@ -311,21 +293,32 @@ Categorías oficiales:
 - Nota general
 ```
 
-Regla importante:
+Estructura de datos: `services/analysis/analysis_result.py` define `AnalysisResult`
+con los campos: `category`, `title`, `summary`, `ideas`, `tasks`, `reminders`,
+`related_project`, `ambiguity_notes`, `tags`, `participants`, `decisions`,
+`actions_for_me`, `actions_for_others`, `risks_blockers`, `next_steps`.
 
-Una entrada puede tener una categoría principal y elementos secundarios.
+OpenAI responde con `response_format={“type”: “json_object”}` garantizando JSON válido.
 
-Ejemplo:
+Reglas aplicadas sobre fechas:
 
-```text
-Categoría principal: Reunión
+- Referencias relativas (“mañana”, “el viernes”) se preservan tal como se dijeron.
+- Nunca se convierten en fechas absolutas inventadas.
+- Se indica el candidato de destino: `[candidato: Google Calendar]` o `[candidato: Google Tasks]`.
 
-Elementos secundarios:
-- Tareas
-- Decisiones
-- Recordatorios
-- Proyectos relacionados
-```
+---
+
+## 11.5. Procesamiento múltiple de archivos
+
+**Objetivo:** procesar todos los MP3 disponibles en `input/` en una sola ejecución.
+
+**Estado:** Completado.
+
+- `file_service.py`: `find_all_mp3()` devuelve lista ordenada de todos los MP3.
+- `OrchestratorAgent.run()` itera sobre todos los archivos.
+- `_process_one()` maneja el pipeline individual con `try/except` propio.
+- Si un archivo falla, se muestra el error y se continúa con el siguiente.
+- Al finalizar se imprime resumen: total encontrados, procesados OK y fallidos.
 
 ---
 
@@ -333,32 +326,35 @@ Elementos secundarios:
 
 **Objetivo:** escribir la información en una base de conocimiento organizada.
 
-**Estado:** Pendiente.
+**Estado:** Completado.
 
-Estructura esperada:
+Estructura implementada en `agents/knowledge_base_agent.py`:
 
 ```text
 Knowledge_Base/
 ├── Ideas/
-│   └── ideas.md
+│   └── ideas.md          (acumulativo)
 ├── Tasks/
-│   └── tasks.md
+│   └── tasks.md           (acumulativo)
 ├── Meetings/
+│   └── YYYY-MM-DD_titulo.md  (archivo individual por reunión)
 ├── Reminders/
-│   └── reminders.md
+│   └── reminders.md      (acumulativo)
 ├── Projects/
-│   └── projects.md
+│   └── projects.md       (acumulativo)
 └── General_Notes/
+    └── YYYY-MM-DD_titulo.md  (archivo individual)
 ```
 
-Reglas:
+Reglas adicionales implementadas:
 
-- Ideas: archivo acumulativo.
-- Tareas: archivo acumulativo.
-- Reuniones: archivo individual.
-- Recordatorios: archivo acumulativo.
-- Proyectos: archivo maestro.
-- Notas generales: archivo por fecha o categoría.
+- Las tareas, recordatorios e ideas detectadas dentro de una Reunión o Nota general
+  también se agregan a sus archivos acumulativos correspondientes (enrutado secundario).
+- Los archivos de Reunión incluyen secciones enriquecidas: Participantes, Decisiones,
+  Acciones para mí, Acciones para otros, Riesgos y bloqueos, Próximos pasos.
+- Tags siempre presentes en toda salida (mínimo 2). Si no hay tags específicos,
+  se usan tags de fallback: `#nota-general`, `#sin-proyecto`, `#requiere-revision`.
+- El archivo `output/` sigue generándose como respaldo con el mismo contenido.
 
 ---
 
@@ -366,27 +362,24 @@ Reglas:
 
 **Objetivo:** crear tareas reales cuando el sistema detecte acciones pendientes.
 
-**Estado:** Pendiente.
+**Estado:** Completado.
 
-Regla funcional:
+Implementado en `agents/tasks_agent.py` + `services/tasks/google_tasks_service.py`.
 
-```text
-Si una acción tiene fecha pero no hora → crear Google Task.
-```
+Reglas aplicadas:
 
-Ejemplo:
+| Caso | Acción |
+|------|--------|
+| Tarea clara sin fecha | Google Task con due date +7 días |
+| Tarea clara con fecha pero sin hora | Google Task con due date |
+| Recordatorio con fecha + hora | Reservado para Google Calendar |
+| Ambiguo / “requiere revisión” | Solo Markdown |
 
-```text
-“Mañana revisar lo de SAP”
-↓
-Google Task con fecha de mañana
-```
-
-También debe registrarse en:
-
-```text
-Knowledge_Base/Tasks/tasks.md
-```
+Decisiones adicionales:
+- El título incluye prefijo de proyecto: `[Proyecto] título de la tarea`.
+- Deduplicación via `Knowledge_Base/Tasks/created_tasks.json` (hash por fuente + título).
+- Lista dedicada en Google Tasks: **”Second Brain Agent”**.
+- El sistema funciona aunque no haya credenciales (Google Tasks es opcional).
 
 ---
 
@@ -394,27 +387,25 @@ Knowledge_Base/Tasks/tasks.md
 
 **Objetivo:** crear eventos reales cuando el sistema detecte fecha y hora claras.
 
-**Estado:** Pendiente.
+**Estado:** Completado.
 
-Regla funcional:
+Implementado en `agents/calendar_agent.py` + `services/calendar/google_calendar_service.py`.
 
-```text
-Si una acción tiene fecha y hora claras → crear evento en Google Calendar.
-```
+Reglas aplicadas:
 
-Ejemplo:
+| Caso | Acción |
+|------|--------|
+| Recordatorio con fecha + hora | Evento en Google Calendar (1 hora de duración) |
+| Recordatorio con solo fecha | Google Tasks (sin hora) |
+| Ambiguo | Solo Markdown |
 
-```text
-“Mañana a las 4 pm junta con Carlos”
-↓
-Google Calendar event
-```
-
-Si la información es ambigua:
-
-```text
-Guardar en Markdown como “requiere revisión”.
-```
+Decisiones adicionales:
+- Título del evento: `result.title` (limpio y descriptivo, generado por el análisis).
+- Duración por default: 1 hora.
+- Timezone configurable via `.env` (`GOOGLE_CALENDAR_TIMEZONE`), default `America/Mexico_City`.
+- Token separado de Google Tasks: `credentials/token_calendar.json`.
+- Deduplicación via `Knowledge_Base/Reminders/created_events.json`.
+- El sistema funciona aunque no haya credenciales (Google Calendar es opcional).
 
 ---
 
@@ -422,27 +413,35 @@ Guardar en Markdown como “requiere revisión”.
 
 **Objetivo:** dejar de usar carpetas locales y procesar archivos desde Google Drive.
 
-**Estado:** Pendiente.
+**Estado:** Completado.
 
-Flujo esperado:
+Implementado en `services/drive/google_drive_service.py` + `agents/drive_agent.py`.
 
-```text
-Google Drive / Inbox
-↓
-Procesamiento automático
-↓
-Knowledge Base en Google Drive
-↓
-Archivo original movido a Processed
-```
-
-Entradas soportadas:
+Flujo implementado:
 
 ```text
-- MP3
-- TXT
-- MD
+Drive/Second_Brain/Inbox/audio.mp3
+    ↓ (DriveAgent.download_inbox)
+input/audio.mp3
+    ↓ (pipeline completo sin cambios)
+Knowledge_Base/** + output/**
+    ↓ (DriveAgent.upload_kb_file)
+Drive/Second_Brain/Knowledge_Base/**
+    ↓ (DriveAgent.move_to_processed)
+Drive/Second_Brain/Processed/audio.mp3
 ```
+
+Decisiones de diseño:
+
+- Drive es una capa de I/O opcional — el pipeline principal no cambia.
+- Si no hay carpetas configuradas en `.env`, el sistema usa carpetas locales.
+- Los IDs de carpetas se configuran via `GOOGLE_DRIVE_INBOX_FOLDER_ID`,
+  `GOOGLE_DRIVE_PROCESSED_FOLDER_ID` y `GOOGLE_DRIVE_KB_FOLDER_ID`.
+- Los archivos KB se suben después de cada procesamiento individual.
+- Al subir un archivo que ya existe en Drive, se actualiza en lugar de duplicar.
+- Token separado de Tasks y Calendar: `credentials/token_drive.json`.
+- Verificado en prueba real: 2 MP3 descargados, procesados, KB subida,
+  archivos movidos a Processed en Drive.
 
 ---
 
@@ -570,16 +569,20 @@ WhatsApp se considera una integración futura porque puede requerir más configu
 ✅ API key y configuración
 ✅ MVP técnico MP3 → transcript → Markdown
 ✅ Documentación
-✅ Servicios
+✅ Servicios modulares
 ✅ Servicios intercambiables
 ✅ Primeros agentes simples
+✅ Archive Agent (MP3 → processed/)
+✅ CLAUDE.md mejorado
+✅ Prompts propios para agentes
+✅ Clasificación real por tipo (6 categorías + JSON estructurado)
+✅ Procesamiento múltiple de archivos
+✅ Knowledge Base Markdown V1 (Ideas, Tasks, Meetings, Reminders, Projects, General_Notes)
+✅ Google Tasks (tareas con due date, prefijo de proyecto, deduplicación)
+✅ Google Calendar (eventos con fecha + hora, deduplicación)
+✅ Google Drive (Inbox → proceso local → KB en Drive → Processed)
 
-➡️ Archive Agent
-➡️ CLAUDE.md mejorado
-➡️ Prompts propios para agentes
-➡️ Clasificación real
-➡️ Knowledge Base Markdown
-➡️ Google Tasks
+➡️ LangGraph
 ➡️ Google Calendar
 ➡️ Google Drive
 ➡️ LangGraph

@@ -112,71 +112,90 @@ const ROADMAP = [
     evidence: "CLAUDE.md contiene sección Coding Guidelines completa"
   },
   {
-    num: 10, title: "Agentes con prompts propios", status: "current", icon: "✍️",
-    summary: "Dar instrucciones específicas a cada agente via archivos de prompts.",
+    num: 10, title: "Agentes con prompts propios", status: "done", icon: "✍️",
+    summary: "Cada agente carga sus instrucciones desde un archivo Markdown en prompts/.",
     details: [
       "prompts/orchestrator_agent.md",
       "prompts/analysis_agent.md",
-      "prompts/task_extraction_agent.md",
-      "prompts/meeting_summary_agent.md",
-      "prompts/markdown_writer_agent.md"
+      "prompts/transcription_agent.md",
+      "prompts/markdown_agent.md",
+      "prompts/archive_agent.md"
     ],
-    evidence: "prompts/ existe pero solo tiene .gitkeep — carpeta vacía"
+    evidence: "AnalysisAgent carga analysis_agent.md via prompt_loader.py al inicializarse"
   },
   {
-    num: 11, title: "Clasificación real por tipo", status: "pending", icon: "🏷️",
-    summary: "Clasificar cada entrada en 6 categorías oficiales.",
+    num: 11, title: "Clasificación real por tipo", status: "done", icon: "🏷️",
+    summary: "GPT clasifica en 6 categorías y devuelve JSON estructurado con todos los campos.",
     details: [
-      "Categorías: Idea, Reunión, Tarea, Recordatorio",
-      "Categorías: Proyecto, Nota general",
-      "Categoría principal + elementos secundarios",
-      "Una reunión puede generar tareas, ideas y recordatorios"
+      "6 categorías: Idea, Reunión, Tarea, Recordatorio, Proyecto, Nota general",
+      "response_format=json_object garantiza JSON válido",
+      "AnalysisResult con 15 campos incluyendo participants, decisions, actions_for_me/others",
+      "Fechas relativas preservadas tal como se dijeron — sin inventar fechas"
     ],
-    evidence: ""
+    evidence: "services/analysis/analysis_result.py + openai_analysis.py verificados en pruebas reales"
   },
   {
-    num: 12, title: "Salidas Markdown V1", status: "pending", icon: "📂",
-    summary: "Base de conocimiento organizada en carpetas y archivos Markdown.",
+    num: 115, title: "Procesamiento múltiple de archivos", status: "done", icon: "📦",
+    summary: "El sistema procesa todos los MP3 de input/ en una sola ejecución.",
     details: [
-      "Knowledge_Base/Ideas/ideas.md (acumulativo)",
-      "Knowledge_Base/Tasks/tasks.md (acumulativo)",
-      "Knowledge_Base/Meetings/YYYY-MM-DD_reunion.md (individual)",
-      "Knowledge_Base/Projects/projects.md (maestro)"
+      "find_all_mp3() devuelve lista ordenada de todos los archivos",
+      "OrchestratorAgent itera con _process_one() por archivo",
+      "Error en un archivo no detiene los demás",
+      "Resumen final: Total | OK | Failed"
     ],
-    evidence: ""
+    evidence: "Verificado con 5-6 MP3 simultáneos: 6/6 OK en prueba real"
   },
   {
-    num: 13, title: "Integración Google Tasks", status: "pending", icon: "✅",
-    summary: "Crear tareas reales en Google Tasks cuando hay acciones pendientes.",
+    num: 12, title: "Knowledge Base Markdown V1", status: "done", icon: "📂",
+    summary: "Información organizada en carpetas por categoría con enrutado secundario.",
     details: [
-      "Si acción tiene fecha pero no hora → Google Task",
-      "Registro también en tasks.md",
-      "Integración con Google Tasks API"
+      "Ideas, Tasks, Reminders, Projects: archivos acumulativos",
+      "Meetings, General_Notes: archivos individuales por fecha",
+      "Tareas de reuniones también llegan a tasks.md (enrutado secundario)",
+      "Reuniones con secciones: Participantes, Decisiones, Acciones, Riesgos, Próximos pasos",
+      "Tags obligatorios en todas las salidas (mínimo 2)"
     ],
-    evidence: ""
+    evidence: "Knowledge_Base/ generada y verificada con 5 MP3 reales: Ideas, Tasks, Meetings, Reminders correctos"
   },
   {
-    num: 14, title: "Integración Google Calendar", status: "pending", icon: "📅",
-    summary: "Crear eventos cuando hay fecha y hora claras.",
+    num: 13, title: "Integración Google Tasks", status: "done", icon: "✅",
+    summary: "Tareas reales en Google Tasks con prefijo de proyecto y due date automático.",
     details: [
-      "Fecha + hora → Google Calendar event",
-      "Solo fecha → Google Tasks",
-      "Ambiguo → Markdown 'requiere revisión'"
+      "Tarea sin fecha → Google Task con due date +7 días",
+      "Tarea con fecha pero sin hora → Google Task con due date exacto",
+      "Recordatorio con fecha + hora → reservado para Calendar",
+      "Prefijo [Proyecto] en título cuando hay proyecto asignado",
+      "Deduplicación via created_tasks.json"
     ],
-    evidence: ""
+    evidence: "Verificado en prueba real: tarea SAT creada con due date mañana en lista 'Second Brain Agent'"
   },
   {
-    num: 15, title: "Integración Google Drive", status: "pending", icon: "☁️",
-    summary: "Procesar archivos directamente desde Google Drive.",
+    num: 14, title: "Integración Google Calendar", status: "done", icon: "📅",
+    summary: "Eventos reales en Google Calendar cuando hay fecha y hora claras.",
     details: [
-      "Leer desde Drive/Second_Brain/Inbox",
-      "Escribir Knowledge Base en Google Drive",
-      "Mover procesados a carpeta Processed en Drive"
+      "Recordatorio con fecha + hora → evento en Calendar (1 hora duración)",
+      "Título limpio desde result.title, no del texto crudo",
+      "Timezone configurable via .env (default: America/Mexico_City)",
+      "Token separado de Tasks: token_calendar.json",
+      "Deduplicación via created_events.json"
     ],
-    evidence: ""
+    evidence: "Verificado: evento 'Recordatorio de cita para renovación de visa' creado el 16 mayo 19:00"
   },
   {
-    num: 16, title: "Migración a LangGraph", status: "pending", icon: "🕸️",
+    num: 15, title: "Integración Google Drive", status: "done", icon: "☁️",
+    summary: "Drive como capa de I/O: Inbox → proceso local → KB en Drive → Processed.",
+    details: [
+      "DriveAgent descarga MP3s de Drive Inbox a input/ local",
+      "Pipeline procesa normalmente sin cambios",
+      "KB files se suben a Drive tras cada procesamiento",
+      "Upload actualiza archivo existente en Drive (no duplica)",
+      "MP3 original se mueve a Drive Processed al finalizar",
+      "Sistema sigue funcionando sin Drive si no hay IDs configurados"
+    ],
+    evidence: "Verificado: 2 MP3s descargados de Drive, KB subida, archivos movidos a Processed"
+  },
+  {
+    num: 16, title: "Migración a LangGraph", status: "current", icon: "🕸️",
     summary: "Convertir el pipeline de agentes en un grafo formal.",
     details: [
       "intake_node → transcription_node → classification_node",
@@ -342,7 +361,9 @@ function updateStats() {
 function animateCar() {
   const car       = document.getElementById('road-car');
   const tlWrap    = document.getElementById('timeline-wrap');
-  const currentEl = document.querySelector('[data-step="10"] .step-dot');
+  const currentStep = ROADMAP.find(s => s.status === 'current');
+  const currentNum  = currentStep ? currentStep.num : 16;
+  const currentEl   = document.querySelector(`[data-step="${currentNum}"] .step-dot`);
 
   if (!car || !tlWrap || !currentEl) return;
 
@@ -365,9 +386,9 @@ function animateCar() {
 
   // After 900ms: scroll to current step, then animate car
   setTimeout(() => {
-    const target10 = document.querySelector('[data-step="10"]');
-    if (target10) {
-      target10.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    const targetEl = document.querySelector(`[data-step="${currentNum}"]`);
+    if (targetEl) {
+      targetEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
     // Small extra delay so the page scrolls before car moves
     setTimeout(() => {

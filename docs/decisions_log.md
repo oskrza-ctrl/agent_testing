@@ -79,6 +79,85 @@ Registro cronológico de decisiones importantes tomadas en el proyecto.
 
 ---
 
+## 2026-05-15
+
+### DEC-010 — Análisis con respuesta JSON estructurada
+
+**Decisión:** Usar `response_format={"type": "json_object"}` en la llamada a OpenAI para que el modelo devuelva siempre un JSON válido con campos definidos, en lugar de texto libre o Markdown.  
+**Razón:** El Markdown libre era difícil de parsear de forma confiable. Un JSON con campos explícitos (`category`, `tasks`, `reminders`, etc.) permite que el código procese la respuesta de forma robusta sin regex ni heurísticas frágiles.
+
+---
+
+### DEC-011 — No inventar fechas absolutas a partir de referencias relativas
+
+**Decisión:** El `analysis_agent.md` prohíbe explícitamente convertir referencias relativas ("mañana", "el viernes", "la próxima semana") en fechas absolutas inventadas.  
+**Razón:** En pruebas reales, GPT generaba fechas del pasado (ej: 2023-10-12) para referencias como "mañana". Esto contaminaría Google Calendar con eventos en fechas incorrectas. La referencia original del usuario se preserva y se marca como candidato (`[candidato: Google Calendar]` o `[candidato: Google Tasks]`).
+
+---
+
+### DEC-012 — Enrutado de elementos secundarios desde Reuniones y Notas generales
+
+**Decisión:** Cuando la categoría principal es Reunión o Nota general, las tareas, recordatorios e ideas detectadas como elementos secundarios se escriben también en sus archivos acumulativos (`tasks.md`, `reminders.md`, `ideas.md`).  
+**Razón:** Sin este enrutado, una tarea capturada dentro de una reunión solo existía en el archivo de la reunión y nunca llegaba a la lista de tareas accionable. El enrutado secundario garantiza que ningún elemento accionable se pierda independientemente de la categoría principal.
+
+---
+
+### DEC-013 — Formato enriquecido para archivos de Reunión
+
+**Decisión:** Los archivos individuales de Reunión incluyen secciones explícitas: Participantes, Decisiones, Acciones para mí, Acciones para otros, Riesgos y bloqueos, Próximos pasos.  
+**Razón:** El formato genérico anterior no capturaba la riqueza de información de una reunión. Las secciones específicas permiten recuperar información accionable directamente sin releer el transcript completo. Si un campo no se detecta, se escribe "No detectado".
+
+---
+
+### DEC-014 — Tags obligatorios en toda salida
+
+**Decisión:** El prompt del agente exige siempre entre 2 y 5 tags. Si el contenido es muy genérico y no hay tags específicos, se usan tags de fallback: `#nota-general`, `#sin-proyecto`, `#requiere-revision`.  
+**Razón:** En pruebas iniciales algunos archivos se generaban sin tags. Los tags son esenciales para la búsqueda futura en la Knowledge Base (Fase 18 — Agente consultable). Establecer la regla desde ahora evita tener que re-procesar entradas en el futuro.
+
+---
+
+### DEC-015 — Google Tasks con prefijo de proyecto y due date de 7 días por default
+
+**Decisión:** Las tareas creadas en Google Tasks incluyen el nombre del proyecto como prefijo `[Proyecto]` en el título. Las tareas sin fecha explícita reciben un due date de 7 días desde el día de procesamiento.  
+**Razón:** Sin prefijo, una lista con muchas tareas pierde contexto. Con `[SAT] Revisar pendientes` el origen es inmediatamente visible. El due date de 7 días evita que las tareas sin fecha queden flotando indefinidamente sin una fecha de revisión.
+
+---
+
+### DEC-016 — Google Calendar usa result.title como título del evento
+
+**Decisión:** El título del evento en Google Calendar se toma de `result.title` (generado por el agente de análisis), no del texto crudo del recordatorio.  
+**Razón:** El texto crudo del recordatorio suele incluir marcadores como `[candidato: Google Calendar]` y referencias de tiempo que quedan mal como título de evento. `result.title` es siempre limpio, descriptivo y generado específicamente para ser un título.
+
+---
+
+### DEC-017 — Credenciales Google opcionales, sistema degradado graciosamente
+
+**Decisión:** Google Tasks y Google Calendar son integraciones opcionales. Si `credentials/credentials.json` no existe, el sistema procesa normalmente y solo omite la creación de tareas y eventos.  
+**Razón:** Permite que el sistema funcione en cualquier entorno (PC sin credenciales, CI, pruebas) sin errores ni configuración obligatoria. La Knowledge Base local siempre funciona.
+
+---
+
+### DEC-018 — Drive como capa de I/O opcional sin modificar el pipeline
+
+**Decisión:** Google Drive se integra como una capa de entrada/salida opcional que rodea el pipeline, sin modificar ningún agente existente. Si los folder IDs no están configurados en `.env`, el sistema usa carpetas locales normalmente.  
+**Razón:** Mantener el pipeline desacoplado del proveedor de almacenamiento. El mismo código funciona en modo local (desarrollo) y en modo Drive (producción) sin cambiar lógica de negocio.
+
+---
+
+### DEC-019 — KB se sincroniza a Drive archivo por archivo tras cada procesamiento
+
+**Decisión:** En lugar de sincronizar toda la Knowledge Base al final, cada archivo KB modificado se sube a Drive inmediatamente después de procesarse el audio correspondiente.  
+**Razón:** Si el proceso falla a mitad de un lote, los archivos ya procesados están seguros en Drive. Una sincronización al final del lote perdería todos los resultados si el sistema falla en el último audio.
+
+---
+
+### DEC-020 — Upload actualiza el archivo existente en Drive, no duplica
+
+**Decisión:** Antes de subir un archivo KB a Drive, se verifica si ya existe con el mismo nombre en la carpeta. Si existe, se actualiza; si no, se crea.  
+**Razón:** Los archivos acumulativos (`ideas.md`, `tasks.md`) se actualizan con cada procesamiento. Sin esta verificación, cada ejecución crearía una copia nueva en Drive generando duplicados.
+
+---
+
 ## Plantilla para nuevas decisiones
 
 ```markdown

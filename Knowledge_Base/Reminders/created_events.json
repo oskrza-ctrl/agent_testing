@@ -1,0 +1,26 @@
+[
+  {
+    "hash": "1a2d6d88fc5a60ba",
+    "source": "2026-05-15 10 42 40.mp3",
+    "title": "Recordatorio 1",
+    "google_event_id": "3i8vpqmhkebiuc947jm8ehtagk",
+    "start": "2026-05-16T19:00:00",
+    "created_at": "2026-05-15"
+  },
+  {
+    "hash": "0291b0b54b8bee0b",
+    "source": "test_visa.mp3",
+    "title": "Recordatorio de cita para renovación de visa",
+    "google_event_id": "rco2vlprueqrl4ipjro5pnq4ho",
+    "start": "2026-05-16T19:00:00",
+    "created_at": "2026-05-15"
+  },
+  {
+    "hash": "cdbf4ac68b1796c5",
+    "source": "2026-05-15 10 42 40.mp3",
+    "title": "Cita para renovación de visa",
+    "google_event_id": "kflnjd59mo3h6u5sapk0tq2dmc",
+    "start": "2026-05-16T19:00:00",
+    "created_at": "2026-05-15"
+  }
+]

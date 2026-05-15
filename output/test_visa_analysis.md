@@ -1,4 +1,4 @@
-# Cita para renovación de visa
+# Recordatorio de cita para renovación de visa
 
 ## Categoria principal
 
@@ -6,7 +6,7 @@ Recordatorio
 
 ## Resumen
 
-El usuario tiene una cita para renovar su visa programada para mañana a las 7 p.m. Es importante recordar esta cita.
+El usuario necesita recordar una cita importante relacionada con la renovación de su visa. Se ha establecido para mañana a las 19:00.
 
 ## Ideas detectadas
 
@@ -18,7 +18,7 @@ No detectado
 
 ## Recordatorios
 
-- Recordatorio — mañana a las 19:00 [candidato: Google Calendar]
+- Recordatorio 1 — mañana a las 19:00 [candidato: Google Calendar]
 
 ## Proyecto relacionado
 
@@ -30,7 +30,7 @@ Ninguno
 
 ## Tags
 
-#recordatorio #cita #visa
+#recordatorio #cita #renovación-visa
 
 ## Transcript completo
 
