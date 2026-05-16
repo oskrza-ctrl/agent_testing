@@ -107,3 +107,53 @@ No detectado
 Ninguno
 
 **Tags:** #tarea #SAT #junta #pendiente
+
+---
+
+## 2026-05-15 — Pendiente de revisión sobre SAT
+
+**Fuente:** test_sat.mp3  
+**Categoria:** Tarea  
+**Proyecto relacionado:** No asignado  
+
+**Resumen:**  
+Se debe revisar información relacionada con el SAT y preparar una lista de dudas para la Junta. Esta tarea tiene un plazo definido para mañana.
+
+**Ideas detectadas:**  
+No detectado
+
+**Tareas detectadas:**  
+- revisar lo de SAT para preparar una lista de dudas para la Junta (mañana)
+
+**Recordatorios:**  
+No detectado
+
+**Requiere revision:**  
+Ninguno
+
+**Tags:** #SAT #pendiente #lista-de-dudas #junta #tarea
+
+---
+
+## 2026-05-15 — Cita para licencia de conducir
+
+**Fuente:** chat:chat_20260515_191435  
+**Categoria:** Tarea  
+**Proyecto relacionado:** No asignado  
+
+**Resumen:**  
+El usuario necesita hacer una cita para sacar la licencia de conducir en tres días. Además, se menciona que ya se ha realizado una cita a las 3:30 de la tarde.
+
+**Ideas detectadas:**  
+No detectado
+
+**Tareas detectadas:**  
+- hacer la cita para sacar la licencia de conducir (en 3 días)
+
+**Recordatorios:**  
+No detectado
+
+**Requiere revision:**  
+Ninguno
+
+**Tags:** #cita #licencia-de-conducir #tarea

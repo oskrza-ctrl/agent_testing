@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Second Brain Agent — Diagrama de Agentes</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: #F0F4F8;
+      font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+      padding: 28px 20px 48px;
+      color: #202124;
+    }
+    .page { max-width: 960px; margin: 0 auto; }
+    header { text-align: center; margin-bottom: 28px; }
+    header h1 { font-size: 21px; font-weight: 700; color: #1a1a2e; }
+    header p  { font-size: 13px; color: #5F6368; margin-top: 5px; line-height: 1.5; }
+    header em { color: #B45309; font-style: normal; font-weight: 700; }
+    svg { width: 100%; height: auto; display: block; background: white; border-radius: 12px;
+          box-shadow: 0 2px 12px rgba(0,0,0,0.10); }
+    .legend {
+      display: flex; flex-wrap: wrap; gap: 14px 24px;
+      margin-top: 18px; justify-content: center; font-size: 12px; color: #444;
+    }
+    .leg { display: flex; align-items: center; gap: 6px; }
+    .ldot { width: 14px; height: 10px; border-radius: 3px; flex-shrink: 0; }
+    .ldash { width: 20px; height: 0; border-top: 2px dashed; flex-shrink: 0; }
+  </style>
+</head>
+<body>
+<div class="page">
+
+  <header>
+    <h1>Second Brain Agent — Interacción de Agentes</h1>
+    <p>
+      El pipeline de LangGraph es <strong>secuencial en ejecución</strong>, pero el flujo de datos es un <strong>fan-out</strong>:<br>
+      <em>AnalysisResult</em> es producido por un solo agente y consumido por cuatro agentes distintos.
+    </p>
+  </header>
+
+  <svg viewBox="0 0 900 740" xmlns="http://www.w3.org/2000/svg" font-family="'Segoe UI',sans-serif">
+    <defs>
+      <marker id="a"  viewBox="0 0 8 8" markerWidth="7" markerHeight="7" refX="6" refY="4" orient="auto"><path d="M0,1 L0,7 L7,4 z" fill="#9AA0A6"/></marker>
+      <marker id="ab" viewBox="0 0 8 8" markerWidth="7" markerHeight="7" refX="6" refY="4" orient="auto"><path d="M0,1 L0,7 L7,4 z" fill="#4285F4"/></marker>
+      <marker id="ag" viewBox="0 0 8 8" markerWidth="7" markerHeight="7" refX="6" refY="4" orient="auto"><path d="M0,1 L0,7 L7,4 z" fill="#B45309"/></marker>
+      <marker id="ao" viewBox="0 0 8 8" markerWidth="7" markerHeight="7" refX="6" refY="4" orient="auto"><path d="M0,1 L0,7 L7,4 z" fill="#EA8600"/></marker>
+      <marker id="at" viewBox="0 0 8 8" markerWidth="7" markerHeight="7" refX="6" refY="4" orient="auto"><path d="M0,1 L0,7 L7,4 z" fill="#10A37F"/></marker>
+      <marker id="ar" viewBox="0 0 8 8" markerWidth="7" markerHeight="7" refX="6" refY="4" orient="auto"><path d="M0,1 L0,7 L7,4 z" fill="#EA4335"/></marker>
+      <marker id="agn" viewBox="0 0 8 8" markerWidth="7" markerHeight="7" refX="6" refY="4" orient="auto"><path d="M0,1 L0,7 L7,4 z" fill="#34A853"/></marker>
+    </defs>
+
+    <!-- ══════════════════════════════════════════════════
+         REGION: OrchestratorAgent
+    ══════════════════════════════════════════════════ -->
+    <rect x="6" y="56" width="888" height="672" rx="10" fill="white" stroke="#9AA0A6" stroke-width="2" stroke-dasharray="8,4"/>
+    <rect x="12" y="49" width="196" height="16" fill="white"/>
+    <text x="18" y="61" font-size="10.5" font-weight="700" fill="#5F6368" letter-spacing="0.8">ORCHESTRATORAGENT</text>
+
+    <!-- REGION: LangGraph -->
+    <rect x="14" y="70" width="872" height="650" rx="8" fill="#FAFBFF" stroke="#4285F4" stroke-width="1.5" stroke-dasharray="5,3"/>
+    <rect x="20" y="64" width="156" height="14" fill="#FAFBFF"/>
+    <text x="24" y="75" font-size="9.5" font-weight="700" fill="#4285F4" letter-spacing="0.6">LANGGRAPH STATEGRAPH</text>
+    <rect x="540" y="64" width="340" height="14" fill="#FAFBFF"/>
+    <text x="542" y="75" font-size="8.5" fill="#4285F4">PipelineState: mp3_path · transcript · result · error</text>
+
+    <!-- ══════════════════════════════════════════════════
+         INPUT: MP3
+    ══════════════════════════════════════════════════ -->
+    <rect x="20" y="82" width="148" height="36" rx="6" fill="#F3E5F5" stroke="#9C27B0" stroke-width="1.5"/>
+    <text x="36" y="97" font-size="14">🎵</text>
+    <text x="56" y="97" font-size="11" font-weight="700" fill="#1a1a2e">audio.mp3</text>
+    <text x="56" y="110" font-size="8.5" fill="#777">input/ · archivo de audio</text>
+
+    <!-- MP3 → TranscriptionAgent -->
+    <line x1="94" y1="118" x2="94" y2="134" stroke="#9AA0A6" stroke-width="1.5" marker-end="url(#a)"/>
+
+    <!-- ══════════════════════════════════════════════════
+         NODO 1: TranscriptionAgent
+    ══════════════════════════════════════════════════ -->
+    <rect x="20" y="134" width="230" height="54" rx="7" fill="#E8F0FE" stroke="#4285F4" stroke-width="2"/>
+    <circle cx="44" cy="161" r="13" fill="#4285F4"/>
+    <text x="44" y="165.5" font-size="11" font-weight="800" fill="white" text-anchor="middle">1</text>
+    <text x="64" y="153" font-size="15">🎙️</text>
+    <text x="84" y="154" font-size="12" font-weight="700" fill="#1a1a2e">TranscriptionAgent</text>
+    <text x="84" y="167" font-size="8.5" fill="#555">MP3 → texto · guarda transcript.txt</text>
+    <text x="84" y="179" font-size="8.5" fill="#4285F4">escribe: state["transcript"]</text>
+
+    <!-- Trans → OpenAI Whisper -->
+    <line x1="250" y1="161" x2="590" y2="161" stroke="#10A37F" stroke-width="1.3" stroke-dasharray="5,3" marker-end="url(#at)"/>
+    <text x="370" y="156" font-size="8.5" fill="#10A37F" font-weight="600">usa API</text>
+    <rect x="590" y="141" width="168" height="40" rx="6" fill="#E6F7F3" stroke="#10A37F" stroke-width="1.5"/>
+    <text x="606" y="157" font-size="13">🤖</text>
+    <text x="624" y="157" font-size="11" font-weight="700" fill="#10A37F">OpenAI Whisper-1</text>
+    <text x="624" y="170" font-size="8.5" fill="#555">~$0.006 / min de audio</text>
+
+    <!-- Trans → Analysis (transcript) -->
+    <line x1="94" y1="188" x2="94" y2="208" stroke="#4285F4" stroke-width="2" marker-end="url(#ab)"/>
+    <text x="100" y="202" font-size="8.5" fill="#4285F4" font-weight="600">transcript</text>
+
+    <!-- ══════════════════════════════════════════════════
+         NODO 2: AnalysisAgent
+    ══════════════════════════════════════════════════ -->
+    <rect x="20" y="208" width="230" height="54" rx="7" fill="#E8F0FE" stroke="#4285F4" stroke-width="2"/>
+    <circle cx="44" cy="235" r="13" fill="#4285F4"/>
+    <text x="44" y="239.5" font-size="11" font-weight="800" fill="white" text-anchor="middle">2</text>
+    <text x="64" y="227" font-size="15">🧠</text>
+    <text x="84" y="228" font-size="12" font-weight="700" fill="#1a1a2e">AnalysisAgent</text>
+    <text x="84" y="241" font-size="8.5" fill="#555">Clasifica · extrae tasks, ideas, reminders</text>
+    <text x="84" y="253" font-size="8.5" fill="#4285F4">escribe: state["result"] → AnalysisResult</text>
+
+    <!-- Analysis → OpenAI GPT -->
+    <line x1="250" y1="235" x2="590" y2="235" stroke="#10A37F" stroke-width="1.3" stroke-dasharray="5,3" marker-end="url(#at)"/>
+    <text x="370" y="230" font-size="8.5" fill="#10A37F" font-weight="600">usa API</text>
+    <rect x="590" y="215" width="168" height="40" rx="6" fill="#E6F7F3" stroke="#10A37F" stroke-width="1.5"/>
+    <text x="606" y="231" font-size="13">💬</text>
+    <text x="624" y="231" font-size="11" font-weight="700" fill="#10A37F">OpenAI GPT-4o-mini</text>
+    <text x="624" y="244" font-size="8.5" fill="#555">JSON mode · response_format</text>
+
+    <!-- Analysis → AnalysisResult HUB -->
+    <line x1="135" y1="262" x2="135" y2="282" stroke="#B45309" stroke-width="2.5" marker-end="url(#ag)"/>
+    <text x="141" y="276" font-size="8.5" fill="#B45309" font-weight="700">produce</text>
+
+    <!-- ══════════════════════════════════════════════════
+         ANALYSIS RESULT HUB  ← EL PIVOTE
+    ══════════════════════════════════════════════════ -->
+    <rect x="20" y="282" width="836" height="66" rx="9" fill="#FEF3C7" stroke="#B45309" stroke-width="2.5"/>
+    <text x="40" y="302" font-size="13" font-weight="800" fill="#92400E">📦  AnalysisResult  —  objeto central de datos</text>
+    <text x="40" y="318" font-size="9" fill="#78350F" letter-spacing="0.2">category  ·  title  ·  summary  ·  tasks[]  ·  reminders[]  ·  ideas[]  ·  tags[]  ·  participants[]  ·  decisions[]  ·  related_project  ·  ambiguity_notes</text>
+    <text x="40" y="338" font-size="8.5" fill="#92400E" font-style="italic">producido UNA vez por AnalysisAgent · leído por MarkdownAgent, KnowledgeBaseAgent, TasksAgent y CalendarAgent</text>
+
+    <!-- ══════════════════════════════════════════════════
+         FAN-OUT ARROWS from AnalysisResult
+    ══════════════════════════════════════════════════ -->
+    <!-- → Markdown (x=75) -->
+    <line x1="75"  y1="348" x2="75"  y2="368" stroke="#B45309" stroke-width="2" marker-end="url(#ag)"/>
+    <!-- → KB (x=280) -->
+    <line x1="280" y1="348" x2="280" y2="368" stroke="#B45309" stroke-width="2" marker-end="url(#ag)"/>
+    <!-- → Tasks (x=520) -->
+    <line x1="520" y1="348" x2="520" y2="368" stroke="#B45309" stroke-width="2" marker-end="url(#ag)"/>
+    <!-- → Calendar (x=730) -->
+    <line x1="730" y1="348" x2="730" y2="368" stroke="#B45309" stroke-width="2" marker-end="url(#ag)"/>
+
+    <!-- ══════════════════════════════════════════════════
+         NODO 3: MarkdownAgent
+    ══════════════════════════════════════════════════ -->
+    <rect x="22" y="368" width="162" height="54" rx="7" fill="#E8F0FE" stroke="#4285F4" stroke-width="2"/>
+    <circle cx="44" cy="395" r="13" fill="#4285F4"/>
+    <text x="44" y="399.5" font-size="11" font-weight="800" fill="white" text-anchor="middle">3</text>
+    <text x="62" y="387" font-size="14">📄</text>
+    <text x="80" y="388" font-size="11" font-weight="700" fill="#1a1a2e">Markdown</text>
+    <text x="80" y="400" font-size="9" fill="#555">Agent</text>
+    <text x="38" y="414" font-size="8.5" fill="#555">Respaldo .md en output/</text>
+
+    <!-- Markdown → output/ -->
+    <line x1="103" y1="422" x2="103" y2="444" stroke="#34A853" stroke-width="1.5" marker-end="url(#agn)"/>
+    <rect x="44" y="444" width="118" height="28" rx="5" fill="#E6F4EA" stroke="#34A853" stroke-width="1.5"/>
+    <text x="103" y="463" font-size="8.5" fill="#137333" font-weight="600" text-anchor="middle">📁 output/</text>
+
+    <!-- ══════════════════════════════════════════════════
+         NODO 4: KnowledgeBaseAgent
+    ══════════════════════════════════════════════════ -->
+    <rect x="198" y="368" width="170" height="54" rx="7" fill="#E8F0FE" stroke="#4285F4" stroke-width="2"/>
+    <circle cx="220" cy="395" r="13" fill="#4285F4"/>
+    <text x="220" y="399.5" font-size="11" font-weight="800" fill="white" text-anchor="middle">4</text>
+    <text x="238" y="387" font-size="14">🗂️</text>
+    <text x="256" y="388" font-size="11" font-weight="700" fill="#1a1a2e">Knowledge</text>
+    <text x="256" y="400" font-size="9" fill="#555">BaseAgent</text>
+    <text x="214" y="414" font-size="8.5" fill="#555">Enruta según category</text>
+
+    <!-- KB internal decision -->
+    <line x1="283" y1="422" x2="283" y2="438" stroke="#EA8600" stroke-width="1.5"/>
+    <polygon points="283,438 305,456 283,474 261,456" fill="#FFF8E1" stroke="#EA8600" stroke-width="1.5"/>
+    <text x="283" y="459" font-size="7.5" fill="#92400E" text-anchor="middle" font-weight="700">category</text>
+    <text x="283" y="469" font-size="7.5" fill="#92400E" text-anchor="middle" font-weight="700">?</text>
+
+    <!-- ACCUM branch (left) -->
+    <line x1="261" y1="456" x2="216" y2="492" stroke="#EA8600" stroke-width="1.3" marker-end="url(#ao)"/>
+    <rect x="166" y="492" width="118" height="46" rx="5" fill="#E6F4EA" stroke="#34A853" stroke-width="1.5"/>
+    <text x="225" y="506" font-size="8.5" font-weight="700" fill="#137333" text-anchor="middle">ACCUMULATIVE</text>
+    <text x="225" y="518" font-size="7.5" fill="#555" text-anchor="middle">ideas.md · tasks.md</text>
+    <text x="225" y="529" font-size="7.5" fill="#555" text-anchor="middle">reminders.md · projects.md</text>
+    <text x="225" y="541" font-size="7" fill="#EA8600" text-anchor="middle">Idea · Tarea · Rec. · Proyecto</text>
+
+    <!-- INDIV branch (right) -->
+    <line x1="305" y1="456" x2="352" y2="492" stroke="#EA8600" stroke-width="1.3" marker-end="url(#ao)"/>
+    <rect x="308" y="492" width="118" height="46" rx="5" fill="#E6F4EA" stroke="#34A853" stroke-width="1.5"/>
+    <text x="367" y="506" font-size="8.5" font-weight="700" fill="#137333" text-anchor="middle">INDIVIDUAL</text>
+    <text x="367" y="518" font-size="7.5" fill="#555" text-anchor="middle">Meetings/*.md</text>
+    <text x="367" y="529" font-size="7.5" fill="#555" text-anchor="middle">General_Notes/*.md</text>
+    <text x="367" y="541" font-size="7" fill="#EA8600" text-anchor="middle">Reunión · Nota general</text>
+
+    <!-- Secondary routing label -->
+    <line x1="367" y1="538" x2="340" y2="558" stroke="#B45309" stroke-width="1" stroke-dasharray="3,2"/>
+    <rect x="242" y="556" width="186" height="30" rx="5" fill="#FEF3C7" stroke="#B45309" stroke-width="1"/>
+    <text x="335" y="568" font-size="7.5" fill="#B45309" text-anchor="middle" font-weight="700">🔀 secondary routing</text>
+    <text x="335" y="580" font-size="7" fill="#92400E" text-anchor="middle">tasks / reminders / ideas → también a sus .md acumulativos</text>
+
+    <!-- ══════════════════════════════════════════════════
+         NODO 6: TasksAgent (opcional)
+    ══════════════════════════════════════════════════ -->
+    <rect x="440" y="368" width="184" height="54" rx="7" fill="#FEF7E0" stroke="#EA8600" stroke-width="2"/>
+    <circle cx="462" cy="395" r="13" fill="#EA8600"/>
+    <text x="462" y="399.5" font-size="11" font-weight="800" fill="white" text-anchor="middle">6</text>
+    <text x="480" y="387" font-size="14">✅</text>
+    <text x="498" y="388" font-size="11" font-weight="700" fill="#1a1a2e">TasksAgent</text>
+    <text x="498" y="400" font-size="8.5" fill="#EA8600" font-weight="600">opcional</text>
+    <text x="456" y="414" font-size="8.5" fill="#555">Reglas · dedup SHA256 · due date</text>
+
+    <!-- Tasks → Google Tasks -->
+    <line x1="532" y1="422" x2="532" y2="468" stroke="#EA8600" stroke-width="1.5" marker-end="url(#ao)"/>
+    <rect x="462" y="468" width="140" height="36" rx="5" fill="#FEF7E0" stroke="#EA8600" stroke-width="1.5"/>
+    <text x="532" y="483" font-size="9" font-weight="700" fill="#92400E" text-anchor="middle">📋 Google Tasks API</text>
+    <text x="532" y="496" font-size="7.5" fill="#555" text-anchor="middle">lista "Second Brain Agent"</text>
+
+    <!-- ══════════════════════════════════════════════════
+         NODO 7: CalendarAgent (opcional)
+    ══════════════════════════════════════════════════ -->
+    <rect x="646" y="368" width="200" height="54" rx="7" fill="#FEF7E0" stroke="#EA8600" stroke-width="2"/>
+    <circle cx="668" cy="395" r="13" fill="#EA8600"/>
+    <text x="668" y="399.5" font-size="11" font-weight="800" fill="white" text-anchor="middle">7</text>
+    <text x="686" y="387" font-size="14">📅</text>
+    <text x="704" y="388" font-size="11" font-weight="700" fill="#1a1a2e">CalendarAgent</text>
+    <text x="704" y="400" font-size="8.5" fill="#EA8600" font-weight="600">opcional</text>
+    <text x="662" y="414" font-size="8.5" fill="#555">Solo fecha + hora · dedup SHA256</text>
+
+    <!-- Calendar → Google Calendar -->
+    <line x1="746" y1="422" x2="746" y2="468" stroke="#EA8600" stroke-width="1.5" marker-end="url(#ao)"/>
+    <rect x="664" y="468" width="164" height="36" rx="5" fill="#FEF7E0" stroke="#EA8600" stroke-width="1.5"/>
+    <text x="746" y="483" font-size="9" font-weight="700" fill="#92400E" text-anchor="middle">🗓️ Google Calendar API</text>
+    <text x="746" y="496" font-size="7.5" fill="#555" text-anchor="middle">evento 1h · timezone configurable</text>
+
+    <!-- ══════════════════════════════════════════════════
+         BOTTOM ROW: DriveSync, Archive, DriveProcessed
+    ══════════════════════════════════════════════════ -->
+
+    <!-- Vertical spine coming down from Markdown area to bottom row -->
+    <line x1="103" y1="472" x2="103" y2="604" stroke="#9AA0A6" stroke-width="1.5" stroke-dasharray="4,3"/>
+    <line x1="103" y1="604" x2="530" y2="604" stroke="#9AA0A6" stroke-width="1.5"/>
+    <line x1="530" y1="604" x2="530" y2="620" stroke="#9AA0A6" stroke-width="1.5" marker-end="url(#a)"/>
+    <line x1="320" y1="604" x2="320" y2="620" stroke="#9AA0A6" stroke-width="1.5" marker-end="url(#a)"/>
+    <line x1="103" y1="604" x2="103" y2="620" stroke="#9AA0A6" stroke-width="1.5" marker-end="url(#a)"/>
+
+    <!-- NODO 5: DriveSync (opcional) -->
+    <rect x="20" y="620" width="184" height="52" rx="7" fill="#FEF7E0" stroke="#EA8600" stroke-width="2"/>
+    <circle cx="42" cy="646" r="13" fill="#EA8600"/>
+    <text x="42" y="650.5" font-size="11" font-weight="800" fill="white" text-anchor="middle">5</text>
+    <text x="60" y="638" font-size="14">☁️</text>
+    <text x="78" y="639" font-size="11" font-weight="700" fill="#1a1a2e">DriveSync</text>
+    <text x="78" y="651" font-size="8.5" fill="#EA8600" font-weight="600">opcional</text>
+    <text x="36" y="664" font-size="8.5" fill="#555">Sube KB modificada a Drive</text>
+
+    <!-- NODO 8: ArchiveAgent -->
+    <rect x="228" y="620" width="184" height="52" rx="7" fill="#E8F0FE" stroke="#4285F4" stroke-width="2"/>
+    <circle cx="250" cy="646" r="13" fill="#4285F4"/>
+    <text x="250" y="650.5" font-size="11" font-weight="800" fill="white" text-anchor="middle">8</text>
+    <text x="268" y="638" font-size="14">📦</text>
+    <text x="286" y="639" font-size="11" font-weight="700" fill="#1a1a2e">ArchiveAgent</text>
+    <text x="244" y="664" font-size="8.5" fill="#555">MP3 → processed/ (solo si sin error)</text>
+
+    <!-- NODO 9: DriveProcessed (opcional) -->
+    <rect x="436" y="620" width="200" height="52" rx="7" fill="#FEF7E0" stroke="#EA8600" stroke-width="2"/>
+    <circle cx="458" cy="646" r="13" fill="#EA8600"/>
+    <text x="458" y="650.5" font-size="11" font-weight="800" fill="white" text-anchor="middle">9</text>
+    <text x="476" y="638" font-size="14">☁️</text>
+    <text x="494" y="639" font-size="11" font-weight="700" fill="#1a1a2e">DriveProcessed</text>
+    <text x="494" y="651" font-size="8.5" fill="#EA8600" font-weight="600">opcional</text>
+    <text x="452" y="664" font-size="8.5" fill="#555">MP3 en Drive: Inbox → Processed</text>
+
+    <!-- Output arrows from bottom nodes -->
+    <line x1="112" y1="672" x2="112" y2="700" stroke="#34A853" stroke-width="1.5" marker-end="url(#agn)"/>
+    <text x="112" y="714" font-size="8" fill="#34A853" text-anchor="middle">Drive/knowledge_base/</text>
+
+    <line x1="320" y1="672" x2="320" y2="700" stroke="#34A853" stroke-width="1.5" marker-end="url(#agn)"/>
+    <text x="320" y="714" font-size="8" fill="#34A853" text-anchor="middle">processed/audio.mp3</text>
+
+    <line x1="536" y1="672" x2="536" y2="700" stroke="#34A853" stroke-width="1.5" marker-end="url(#agn)"/>
+    <text x="536" y="714" font-size="8" fill="#34A853" text-anchor="middle">Drive/processed/</text>
+
+    <!-- ══════════════════════════════════════════════════
+         ERROR SHORT-CIRCUIT arrow (right edge)
+    ══════════════════════════════════════════════════ -->
+    <path d="M 858,295 Q 878,295 878,646 Q 878,660 856,660"
+          fill="none" stroke="#EA4335" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#ar)"/>
+    <text x="882" y="480" font-size="8.5" fill="#EA4335" text-anchor="middle"
+          transform="rotate(90,882,480)">error → early return → MP3 permanece en input/</text>
+
+    <!-- ══════════════════════════════════════════════════
+         EXECUTION ORDER note (left margin)
+    ══════════════════════════════════════════════════ -->
+    <text x="856" y="86" font-size="9" fill="#5F6368" text-anchor="end" font-style="italic">orden de ejecución: 1→2→3→4→5→6→7→8→9</text>
+
+  </svg>
+
+  <div class="legend">
+    <div class="leg"><div class="ldot" style="background:#4285F4;"></div>Nodo obligatorio</div>
+    <div class="leg"><div class="ldot" style="background:#EA8600;"></div>Nodo opcional (requiere Google)</div>
+    <div class="leg"><div class="ldot" style="background:#B45309;"></div>AnalysisResult — hub de datos</div>
+    <div class="leg"><div class="ldot" style="background:#10A37F;"></div>OpenAI APIs</div>
+    <div class="leg"><div class="ldot" style="background:#34A853;"></div>Outputs</div>
+    <div class="leg"><div class="ldash" style="border-color:#EA4335;"></div>Error → skip</div>
+  </div>
+
+</div>
+</body>
+</html>

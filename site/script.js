@@ -195,17 +195,19 @@ const ROADMAP = [
     evidence: "Verificado: 2 MP3s descargados de Drive, KB subida, archivos movidos a Processed"
   },
   {
-    num: 16, title: "Migración a LangGraph", status: "current", icon: "🕸️",
-    summary: "Convertir el pipeline de agentes en un grafo formal.",
+    num: 16, title: "Migración a LangGraph", status: "done", icon: "🕸️",
+    summary: "Pipeline orquestado por un StateGraph de 9 nodos con estado compartido.",
     details: [
-      "intake_node → transcription_node → classification_node",
-      "task_node → calendar_node → markdown_node → archive_node",
-      "Mejor control de flujo y manejo de estados"
+      "pipeline/state.py — PipelineState TypedDict compartido entre nodos",
+      "pipeline/nodes.py — 9 funciones nodo que envuelven agentes existentes",
+      "pipeline/graph.py — StateGraph lineal compilado una vez al inicio",
+      "Agentes existentes sin cambios — LangGraph solo orquesta",
+      "Error en cualquier nodo detiene el pipeline, MP3 no se mueve"
     ],
-    evidence: ""
+    evidence: "Verificado: pipeline completo con LangGraph, resultado idéntico al anterior"
   },
   {
-    num: 17, title: "Cloud Run + Scheduler", status: "pending", icon: "🌐",
+    num: 17, title: "Cloud Run + Scheduler", status: "current", icon: "🌐",
     summary: "Ejecución automática en la nube sin depender del PC.",
     details: [
       "Contenerizar con Docker",
@@ -362,7 +364,7 @@ function animateCar() {
   const car       = document.getElementById('road-car');
   const tlWrap    = document.getElementById('timeline-wrap');
   const currentStep = ROADMAP.find(s => s.status === 'current');
-  const currentNum  = currentStep ? currentStep.num : 16;
+  const currentNum  = currentStep ? currentStep.num : 17;
   const currentEl   = document.querySelector(`[data-step="${currentNum}"] .step-dot`);
 
   if (!car || !tlWrap || !currentEl) return;

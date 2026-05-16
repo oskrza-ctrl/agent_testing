@@ -158,6 +158,27 @@ Registro cronológico de decisiones importantes tomadas en el proyecto.
 
 ---
 
+### DEC-021 — LangGraph como orquestador, agentes sin cambios
+
+**Decisión:** LangGraph reemplaza la orquestación imperativa en `_process_one()` sin modificar ningún agente existente. Los agentes se convierten en nodos mediante funciones factory que los envuelven.  
+**Razón:** Separar la lógica de negocio (agentes) del flujo de ejecución (grafo). Si en el futuro se agregan ramas condicionales, paralelización o checkpointing, solo cambia el grafo, no los agentes.
+
+---
+
+### DEC-022 — Error en cualquier nodo detiene el pipeline sin mover el MP3
+
+**Decisión:** Si un nodo setea `state["error"]`, todos los nodos siguientes hacen early return `{}`. El nodo `archive_node` también hace early return, por lo que el MP3 queda en `input/` para revisión manual.  
+**Razón:** Comportamiento idéntico al pipeline anterior: un error en transcripción o análisis nunca debe mover el archivo original, garantizando que se pueda reintentar.
+
+---
+
+### DEC-023 — Nodos opcionales verifican existencia del agente en tiempo de ejecución
+
+**Decisión:** Los nodos de Drive, Tasks y Calendar verifican `if not agent: return {}` al inicio. No usan edges condicionales de LangGraph para simplificar el grafo.  
+**Razón:** Un grafo lineal es más fácil de mantener y depurar que uno con múltiples ramas condicionales. La condicionalidad está en el nodo, no en el grafo.
+
+---
+
 ## Plantilla para nuevas decisiones
 
 ```markdown

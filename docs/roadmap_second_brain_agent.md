@@ -449,32 +449,43 @@ Decisiones de diseño:
 
 **Objetivo:** convertir el flujo de agentes simples en un grafo formal de ejecución.
 
-**Estado:** Pendiente.
+**Estado:** Completado.
 
-Grafo esperado:
+Implementado en `pipeline/graph.py`, `pipeline/nodes.py`, `pipeline/state.py`.
+
+Grafo implementado:
 
 ```text
-intake_node
-↓
 transcription_node
 ↓
-classification_node
-↓
-task_node
-↓
-calendar_node
+analysis_node
 ↓
 markdown_node
 ↓
+knowledge_base_node
+↓
+drive_sync_node (opcional)
+↓
+tasks_node (opcional)
+↓
+calendar_node (opcional)
+↓
 archive_node
+↓
+drive_processed_node (opcional)
+↓
+END
 ```
 
-Propósito:
+Diseño:
 
-- Mejor control del flujo.
-- Mejor manejo de estados.
-- Mejor capacidad de depuración.
-- Preparar el sistema para escenarios más complejos.
+- `PipelineState` es el estado compartido que fluye entre nodos.
+- Cada nodo envuelve un agente existente — los agentes no cambiaron.
+- Si un nodo setea `error` en el estado, los nodos siguientes hacen early return.
+- El MP3 no se mueve si ocurre error en cualquier nodo.
+- Nodos opcionales (Drive, Tasks, Calendar) verifican si el agente existe antes de ejecutar.
+- `OrchestratorAgent._process_one()` ahora invoca `pipeline.invoke(initial_state)`.
+- Verificado en prueba real: pipeline completo con LangGraph, resultado idéntico al anterior.
 
 ---
 
@@ -581,8 +592,9 @@ WhatsApp se considera una integración futura porque puede requerir más configu
 ✅ Google Tasks (tareas con due date, prefijo de proyecto, deduplicación)
 ✅ Google Calendar (eventos con fecha + hora, deduplicación)
 ✅ Google Drive (Inbox → proceso local → KB en Drive → Processed)
+✅ LangGraph (StateGraph con 9 nodos, estado compartido, manejo de errores formal)
 
-➡️ LangGraph
+➡️ Cloud Run + Scheduler
 ➡️ Google Calendar
 ➡️ Google Drive
 ➡️ LangGraph

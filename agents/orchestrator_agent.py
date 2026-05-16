@@ -5,7 +5,7 @@ from services.transcription.base import TranscriptionService
 from services.analysis.base import AnalysisService
 from services.tasks.base import TasksService
 from services.calendar.base import CalendarService
-from services.file_service import find_all_mp3, save_text
+from services.file_service import find_all_mp3
 
 from agents.transcription_agent import TranscriptionAgent
 from agents.analysis_agent import AnalysisAgent
@@ -15,10 +15,11 @@ from agents.tasks_agent import TasksAgent
 from agents.calendar_agent import CalendarAgent
 from agents.archive_agent import ArchiveAgent
 from agents.drive_agent import DriveAgent
+from pipeline.graph import build_graph
 
 
 class OrchestratorAgent:
-    """Coordinates the full pipeline for all MP3s in input/ (or Drive Inbox)."""
+    """Coordinates the full pipeline via a LangGraph StateGraph."""
 
     def __init__(
         self,
@@ -33,28 +34,44 @@ class OrchestratorAgent:
         calendar_svc: Optional[CalendarService] = None,
         drive_agent: Optional[DriveAgent] = None,
     ):
-        self.input_dir  = input_dir
-        self.output_dir = output_dir
-        self.kb_dir     = kb_dir
+        self.input_dir   = input_dir
+        self.output_dir  = output_dir
+        self.kb_dir      = kb_dir
         self.drive_agent = drive_agent
 
-        self.transcription_agent = TranscriptionAgent(transcription_svc)
-        self.analysis_agent      = AnalysisAgent(analysis_svc, prompts_dir)
-        self.markdown_agent      = MarkdownAgent()
-        self.kb_agent            = KnowledgeBaseAgent(kb_dir)
-        self.archive_agent       = ArchiveAgent(processed_dir)
+        # Build individual agents
+        transcription_agent = TranscriptionAgent(transcription_svc)
+        analysis_agent      = AnalysisAgent(analysis_svc, prompts_dir)
+        markdown_agent      = MarkdownAgent()
+        kb_agent            = KnowledgeBaseAgent(kb_dir)
+        archive_agent       = ArchiveAgent(processed_dir)
 
-        self.tasks_agent = (
+        tasks_agent = (
             TasksAgent(tasks_svc, kb_dir / "Tasks" / "created_tasks.json")
             if tasks_svc else None
         )
-        self.calendar_agent = (
+        calendar_agent = (
             CalendarAgent(calendar_svc, kb_dir / "Reminders" / "created_events.json")
             if calendar_svc else None
         )
 
+        # Build LangGraph pipeline
+        self.pipeline = build_graph(
+            agents={
+                "transcription":  transcription_agent,
+                "analysis":       analysis_agent,
+                "markdown":       markdown_agent,
+                "kb":             kb_agent,
+                "tasks":          tasks_agent,
+                "calendar":       calendar_agent,
+                "archive":        archive_agent,
+                "drive":          drive_agent,
+                "drive_sync_fn":  self._sync_kb_to_drive if drive_agent else None,
+            },
+            dirs={"output": output_dir, "kb": kb_dir},
+        )
+
     def run(self) -> None:
-        # If Drive is enabled, download MP3s from Inbox first
         if self.drive_agent:
             print("\n[DriveAgent] Syncing inbox from Google Drive...")
             self.drive_agent.download_inbox()
@@ -79,55 +96,36 @@ class OrchestratorAgent:
         print(f"{'=' * 50}")
 
     def _process_one(self, mp3_path: Path) -> bool:
-        """Process a single MP3. Returns True on success, False on failure."""
-        try:
-            transcript = self.transcription_agent.run(mp3_path)
-            save_text(self.output_dir / f"{mp3_path.stem}_transcript.txt", transcript)
+        initial_state = {
+            "mp3_path":   mp3_path,
+            "mp3_name":   mp3_path.name,
+            "mp3_stem":   mp3_path.stem,
+            "transcript": "",
+            "result":     None,
+            "error":      None,
+        }
 
-            result = self.analysis_agent.run(transcript)
-            print(f"[OrchestratorAgent] Category: {result.category} | Title: {result.title}")
+        final_state = self.pipeline.invoke(initial_state)
 
-            self.markdown_agent.run(self.output_dir, mp3_path.stem, transcript, result)
-            self.kb_agent.run(result, mp3_path.name)
-
-            # Sync updated KB files to Drive
-            if self.drive_agent:
-                self._sync_kb_to_drive(result)
-
-            if self.tasks_agent:
-                self.tasks_agent.run(result, mp3_path.name)
-
-            if self.calendar_agent:
-                self.calendar_agent.run(result, mp3_path.name)
-
-        except Exception as e:
-            print(f"[OrchestratorAgent] ERROR on {mp3_path.name}: {e}")
-            print(f"[OrchestratorAgent] File was NOT moved. Check input/ for the original.")
+        if final_state.get("error"):
+            print(f"[OrchestratorAgent] ERROR on {mp3_path.name}: {final_state['error']}")
+            print("[OrchestratorAgent] File was NOT moved. Check input/ for the original.")
             return False
-
-        self.archive_agent.run(mp3_path)
-
-        # Move the original file in Drive after successful archive
-        if self.drive_agent:
-            self.drive_agent.move_to_processed(mp3_path.name)
 
         return True
 
     def _sync_kb_to_drive(self, result) -> None:
-        """Upload the KB files that were just written for this result."""
+        """Upload KB files that were written for this result to Drive."""
         from agents.knowledge_base_agent import ACCUMULATIVE, INDIVIDUAL
         import re
         from datetime import date
 
-        # Determine which files were touched based on category
         files_to_sync = []
 
         if result.category in ACCUMULATIVE:
             folder, filename, _ = ACCUMULATIVE[result.category]
             files_to_sync.append(self.kb_dir / folder / filename)
-
-        elif result.category not in ACCUMULATIVE:
-            # Individual file — reconstruct filename same way KnowledgeBaseAgent does
+        else:
             folder_key = "Reunion" if result.category == "Reunión" else result.category
             folder = INDIVIDUAL.get(folder_key, "General_Notes")
             today  = date.today().isoformat()
@@ -135,7 +133,6 @@ class OrchestratorAgent:
             safe   = re.sub(r"\s+", "_", safe.strip())[:50].rstrip("_") or "sin_titulo"
             files_to_sync.append(self.kb_dir / folder / f"{today}_{safe}.md")
 
-            # Also sync secondary files if any were written
             if result.tasks:
                 files_to_sync.append(self.kb_dir / "Tasks" / "tasks.md")
             if result.reminders:

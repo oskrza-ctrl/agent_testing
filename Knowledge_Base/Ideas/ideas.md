@@ -47,3 +47,28 @@ No detectado
 Ninguno
 
 **Tags:** #inteligencia-artificial #tecnología #futuro #opinión
+
+---
+
+## 2026-05-15 — Crear un tablero de Notion para el proyecto Second Brain
+
+**Fuente:** chat:chat_20260515_191344  
+**Categoria:** Idea  
+**Proyecto relacionado:** Second Brain  
+
+**Resumen:**  
+Se sugiere crear un tablero en Notion con el fin de rastrear los avances del proyecto Second Brain de manera semanal. Esta idea busca facilitar la organización y el seguimiento de los progresos en el proyecto.
+
+**Ideas detectadas:**  
+- Crear un tablero de Notion para rastrear los avances del proyecto Second Brain semanalmente
+
+**Tareas detectadas:**  
+No detectado
+
+**Recordatorios:**  
+No detectado
+
+**Requiere revision:**  
+Ninguno
+
+**Tags:** #tablero-Notion #Second-Brain #seguimiento-avances #organización #idea
