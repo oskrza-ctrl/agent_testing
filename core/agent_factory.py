@@ -20,6 +20,28 @@ from agents.transcription_agent import TranscriptionAgent
 from core.message_handler import MessageHandler
 
 
+def _write_google_credentials_from_env() -> None:
+    """Write Google credential files from base64-encoded env vars (for Railway/cloud deployments)."""
+    import base64
+
+    mapping = {
+        "GOOGLE_CREDENTIALS_B64":      "credentials/credentials.json",
+        "GOOGLE_TOKEN_TASKS_B64":      "credentials/token.json",
+        "GOOGLE_TOKEN_CALENDAR_B64":   "credentials/token_calendar.json",
+        "GOOGLE_TOKEN_DRIVE_B64":      "credentials/token_drive.json",
+    }
+    written = []
+    for env_var, file_path in mapping.items():
+        value = os.getenv(env_var)
+        if value:
+            path = Path(file_path)
+            path.parent.mkdir(exist_ok=True)
+            path.write_text(base64.b64decode(value).decode("utf-8"), encoding="utf-8")
+            written.append(file_path)
+    if written:
+        print(f"[factory] Credenciales Google escritas desde env vars: {written}")
+
+
 def build_message_handler(
     api_key: str,
     kb_dir: Path      = Path("Knowledge_Base"),
@@ -33,6 +55,7 @@ def build_message_handler(
     Optional Google integrations (Tasks, Calendar) are enabled automatically
     if credentials/credentials.json exists.
     """
+    _write_google_credentials_from_env()
     output_dir.mkdir(exist_ok=True)
 
     # ── OpenAI client ─────────────────────────────────────────────
