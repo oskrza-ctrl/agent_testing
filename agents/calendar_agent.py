@@ -34,6 +34,24 @@ class CalendarAgent:
         self.tracking_file = tracking_file
         self._tracking     = self._load_tracking()
 
+    # ── Action: archive past events ───────────────────────
+
+    def archive_past_events(self) -> str:
+        """Delete all past events from Google Calendar. Returns a response string."""
+        events = self.calendar_svc.list_past_events(max_results=50)
+        if not events:
+            return "No encontré eventos pasados en tu calendario."
+
+        deleted = []
+        for event in events:
+            self.calendar_svc.delete_event(event["id"])
+            deleted.append(event["title"] or "(sin título)")
+            print(f"[CalendarAgent] Archived: '{event['title']}' ({event['start']})")
+
+        titles = ", ".join(f'"{t}"' for t in deleted[:5])
+        suffix = f" (y {len(deleted)-5} más)" if len(deleted) > 5 else ""
+        return f"Archivé {len(deleted)} evento(s) pasado(s): {titles}{suffix} ✓"
+
     # ── Main entry point ──────────────────────────────────
 
     def run(self, result: AnalysisResult, source: str) -> None:

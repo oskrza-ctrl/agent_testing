@@ -9,14 +9,18 @@ _SYSTEM = """Clasifica el mensaje del usuario como:
 - CAPTURE: el usuario está compartiendo información nueva — una idea, tarea, recordatorio,
   nota de reunión, proyecto o cualquier contenido que debe guardarse en su base de conocimiento.
 
+- ACTION: el usuario quiere ejecutar una acción sobre datos existentes — completar una tarea,
+  marcar algo como hecho, archivar eventos, borrar recordatorios. Ejemplos: "marca como
+  completada la tarea X", "archiva los eventos pasados", "borra la cita de ayer".
+
 - QUERY: el usuario está haciendo una pregunta, buscando información o pidiendo un resumen
   de algo que ya está en su base de conocimiento.
 
-Responde ÚNICAMENTE con una de estas palabras: PIPELINE, CAPTURE o QUERY, sin explicación."""
+Responde ÚNICAMENTE con una de estas palabras: PIPELINE, CAPTURE, ACTION o QUERY, sin explicación."""
 
 
 def classify_intent(client: OpenAI, message: str) -> str:
-    """Returns 'PIPELINE', 'CAPTURE' or 'QUERY'."""
+    """Returns 'PIPELINE', 'CAPTURE', 'ACTION' or 'QUERY'."""
     response = client.chat.completions.create(
         model="gpt-4o-mini",
         messages=[
@@ -31,4 +35,6 @@ def classify_intent(client: OpenAI, message: str) -> str:
         return "PIPELINE"
     if "CAPTURE" in result:
         return "CAPTURE"
+    if "ACTION" in result:
+        return "ACTION"
     return "QUERY"

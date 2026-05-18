@@ -36,6 +36,32 @@ class GoogleCalendarService(CalendarService):
         result = svc.events().insert(calendarId="primary", body=event).execute()
         return result["id"]
 
+    def list_past_events(self, max_results: int = 20) -> list[dict]:
+        """Return events that ended before now."""
+        svc     = self._get_service()
+        time_max = datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ")
+        result  = svc.events().list(
+            calendarId="primary",
+            timeMax=time_max,
+            maxResults=max_results,
+            singleEvents=True,
+            orderBy="startTime",
+        ).execute()
+        events = []
+        for e in result.get("items", []):
+            start = e.get("start", {}).get("dateTime") or e.get("start", {}).get("date", "")
+            events.append({
+                "id":    e["id"],
+                "title": e.get("summary", ""),
+                "start": start,
+            })
+        return events
+
+    def delete_event(self, event_id: str) -> None:
+        """Delete a calendar event."""
+        svc = self._get_service()
+        svc.events().delete(calendarId="primary", eventId=event_id).execute()
+
     # ── Auth helpers ──────────────────────────────────────
 
     def _get_service(self):

@@ -12,6 +12,7 @@ from openai import OpenAI
 
 from services.rag.chromadb_rag_service import ChromaDBRAGService
 from services.rag.intent_classifier import classify_intent
+from services.rag.action_classifier import classify_action
 from agents.query_agent import QueryAgent
 from agents.analysis_agent import AnalysisAgent
 from agents.markdown_agent import MarkdownAgent
@@ -71,6 +72,8 @@ class MessageHandler:
             return self.run_pipeline()
         if intent == "CAPTURE":
             return self._handle_capture(text)
+        if intent == "ACTION":
+            return self._handle_action(text)
         return self.query_agent.chat(text)
 
     def run_pipeline(self) -> str:
@@ -202,6 +205,24 @@ class MessageHandler:
             f"{tasks_msg}"
             f"{cal_msg}"
         )
+
+    # ── Action ────────────────────────────────────────────
+
+    def _handle_action(self, text: str) -> str:
+        """Level-2 routing: determine the specific action and execute it."""
+        action = classify_action(self.client, text)
+
+        if action == "COMPLETE_TASK":
+            if not self.tasks_agent:
+                return "Google Tasks no está configurado."
+            return self.tasks_agent.find_and_complete(text, self.client)
+
+        if action == "ARCHIVE_EVENTS":
+            if not self.calendar_agent:
+                return "Google Calendar no está configurado."
+            return self.calendar_agent.archive_past_events()
+
+        return "No entendí qué acción querías ejecutar."
 
     def _run_tasks(self, result, source: str) -> str:
         if not self.tasks_agent or not result.tasks:

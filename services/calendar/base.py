@@ -15,3 +15,13 @@ class CalendarService(ABC):
     ) -> str:
         """Create a calendar event and return its provider ID."""
         ...
+
+    @abstractmethod
+    def list_past_events(self, max_results: int = 20) -> list[dict]:
+        """Return past events as list of {id, title, start}."""
+        ...
+
+    @abstractmethod
+    def delete_event(self, event_id: str) -> None:
+        """Delete a calendar event by its provider ID."""
+        ...

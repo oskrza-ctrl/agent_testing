@@ -41,6 +41,42 @@ class TasksAgent:
         self.tracking_file = tracking_file
         self._tracking     = self._load_tracking()
 
+    # ── Action: complete a task ───────────────────────────
+
+    def find_and_complete(self, query: str, client) -> str:
+        """Find the task that best matches 'query' and mark it as completed.
+        Uses GPT to select from the pending task list. Returns a response string.
+        """
+        tasks = self.tasks_svc.list_tasks()
+        if not tasks:
+            return "No tienes tareas pendientes en Google Tasks."
+
+        task_list = "\n".join(
+            f"{i+1}. [{t['id']}] {t['title']}" for i, t in enumerate(tasks)
+        )
+        prompt = (
+            f"El usuario quiere completar esta tarea: \"{query}\"\n\n"
+            f"Lista de tareas pendientes:\n{task_list}\n\n"
+            "Responde ÚNICAMENTE con el ID de la tarea que mejor coincide, "
+            "o con la palabra 'none' si ninguna coincide."
+        )
+        response = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[{"role": "user", "content": prompt}],
+            temperature=0,
+            max_tokens=50,
+        )
+        task_id = response.choices[0].message.content.strip()
+
+        if task_id.lower() == "none":
+            return f"No encontré ninguna tarea que coincida con \"{query}\"."
+
+        # Find the title for a friendly response
+        title = next((t["title"] for t in tasks if t["id"] == task_id), task_id)
+        self.tasks_svc.complete_task(task_id)
+        print(f"[TasksAgent] Completed: '{title}'")
+        return f"Listo, marqué como completada: \"{title}\" ✓"
+
     # ── Main entry point ──────────────────────────────────
 
     def run(self, result: AnalysisResult, source: str) -> None:

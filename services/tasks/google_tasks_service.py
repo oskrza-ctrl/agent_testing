@@ -38,6 +38,32 @@ class GoogleTasksService(TasksService):
         result = svc.tasks().insert(tasklist=tl, body=body).execute()
         return result["id"]
 
+    def list_tasks(self) -> list[dict]:
+        """Return all pending (needsAction) tasks from the Second Brain list."""
+        svc = self._get_service()
+        tl  = self._get_tasklist_id()
+        result = svc.tasks().list(
+            tasklist=tl, showCompleted=False, maxResults=100
+        ).execute()
+        tasks = []
+        for t in result.get("items", []):
+            tasks.append({
+                "id":    t["id"],
+                "title": t.get("title", ""),
+                "due":   t.get("due", ""),
+            })
+        return tasks
+
+    def complete_task(self, task_id: str) -> None:
+        """Mark a task as completed."""
+        svc = self._get_service()
+        tl  = self._get_tasklist_id()
+        svc.tasks().update(
+            tasklist=tl,
+            task=task_id,
+            body={"id": task_id, "status": "completed"},
+        ).execute()
+
     # ── Auth helpers ──────────────────────────────────────
 
     def _get_service(self):
