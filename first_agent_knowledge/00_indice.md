@@ -77,6 +77,17 @@ Esta bóveda documenta todo lo necesario para entender y replicar el proyecto **
 
 ---
 
+## Grupo H — RAG, canales y despliegue
+
+- [[35_embeddings_vectores]] — Qué son los embeddings, vectores semánticos, distancia coseno
+- [[36_chromadb_rag]] — ChromaDB, RAG, indexación y consulta semántica
+- [[37_intent_classifier]] — Clasificador de intención en dos niveles: QUERY/CAPTURE/PIPELINE/ACTION
+- [[38_message_handler]] — MessageHandler canal-agnóstico, agent_factory, flujo interno
+- [[39_telegram_bot]] — Bot de Telegram, polling vs webhook, handlers, whitelist
+- [[40_fastapi_railway]] — FastAPI, uvicorn, CORS, despliegue en Railway, dos servicios
+
+---
+
 ## Punto de entrada recomendado
 
 Si eres nuevo en el proyecto, empieza aquí:
@@ -86,4 +97,6 @@ Si eres nuevo en el proyecto, empieza aquí:
 3. [[09_apis_rest]] — cómo funciona una API
 4. [[11_openai_overview]] — OpenAI en el proyecto
 5. [[20_arquitectura_servicios]] — cómo está organizado el código
-6. [[29_langgraph_intro]] — el orquestador final
+6. [[36_chromadb_rag]] — cómo el agente busca en tu KB
+7. [[38_message_handler]] — el núcleo que une todo
+8. [[29_langgraph_intro]] — el orquestador del pipeline
