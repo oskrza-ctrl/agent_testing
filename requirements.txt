@@ -7,3 +7,5 @@ langgraph
 langchain-core
 chromadb
 python-telegram-bot
+fastapi
+uvicorn[standard]
