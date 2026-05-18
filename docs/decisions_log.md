@@ -179,6 +179,60 @@ Registro cronológico de decisiones importantes tomadas en el proyecto.
 
 ---
 
+## 2026-05-15 (continuación)
+
+### DEC-024 — RAG con ChromaDB para agente consultable
+
+**Decisión:** Usar ChromaDB como vector store local y `text-embedding-3-small` de OpenAI para indexar la Knowledge Base y permitir búsqueda semántica.  
+**Razón:** ChromaDB es gratuito, local, persistente y fácil de integrar. `text-embedding-3-small` cuesta ~$0.02/M tokens — prácticamente cero para uso personal. No se requiere infraestructura externa.  
+**Diseño:** La colección se recrea completa al arrancar `chat.py` para garantizar que siempre refleje el estado actual de la KB.
+
+---
+
+### DEC-025 — Modo dual QUERY/CAPTURE con clasificador GPT
+
+**Decisión:** El `chat.py` detecta automáticamente si el usuario está haciendo una pregunta (QUERY) o compartiendo contenido nuevo (CAPTURE) usando GPT-4o-mini como clasificador de intención.  
+**Razón:** Evita que el usuario tenga que usar comandos explícitos o dos entrypoints distintos. Una sola conversación libre maneja ambos modos. GPT clasifica mejor que reglas de texto porque entiende el contexto semántico ("tuve una reunión hoy" → CAPTURE, aunque no empiece con "idea:").
+
+---
+
+### DEC-026 — Re-indexado inmediato tras captura de texto
+
+**Decisión:** Después de cada captura de texto, `chat.py` re-indexa la Knowledge Base completa en ChromaDB.  
+**Razón:** Sin re-indexado, el contenido recién capturado no aparece en las consultas de la misma sesión. El re-indexado completo tarda < 2 segundos con el volumen actual, por lo que no justifica una solución incremental más compleja.
+
+---
+
+## 2026-05-18
+
+### DEC-027 — process_message() como función central canal-agnóstica
+
+**Decisión:** Extraer toda la lógica de decisión (QUERY vs CAPTURE) al `MessageHandler` en `core/message_handler.py`. Cada canal (CLI, Telegram, futura app) solo llama `handler.process_message(text)` y recibe una respuesta en texto.  
+**Razón:** Evita duplicar lógica entre entrypoints. Cuando se agrega un nuevo canal solo se escribe el adaptador de entrada/salida, no la lógica de negocio.
+
+---
+
+### DEC-028 — Telegram en modo polling para desarrollo
+
+**Decisión:** `telegram_bot.py` usa polling (`app.run_polling()`) en lugar de webhook.  
+**Razón:** Polling no requiere URL pública ni infraestructura desplegada. Funciona localmente desde cualquier PC. El webhook se activará cuando se implemente Cloud Run (paso 17).
+
+---
+
+### DEC-029 — Audios de Telegram siempre son CAPTURE
+
+**Decisión:** Los mensajes de voz de Telegram siempre se procesan como captura (transcripción → análisis → KB). No pasan por el clasificador de intención.  
+**Razón:** Un audio de voz es siempre contenido nuevo — no tiene sentido que alguien mande una nota de voz para "hacer una pregunta" cuando puede escribirla. Esto simplifica el flujo y evita clasificaciones erróneas.
+
+---
+
+### DEC-030 — Whitelist de usuario en Telegram via TELEGRAM_ALLOWED_USER_ID
+
+**Decisión:** El bot verifica que el `user.id` del remitente coincida con `TELEGRAM_ALLOWED_USER_ID` antes de procesar cualquier mensaje. Si no coincide, responde "No autorizado."  
+**Razón:** Sin esta restricción el bot es completamente público — cualquiera que conozca el username puede consultar o modificar la Knowledge Base del usuario.
+
+---
+
 ## Plantilla para nuevas decisiones
 
 ```markdown

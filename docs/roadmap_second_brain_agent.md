@@ -493,7 +493,7 @@ Diseño:
 
 **Objetivo:** ejecutar el sistema automáticamente sin depender de la PC.
 
-**Estado:** Pendiente.
+**Estado:** Pausado — se retoma después del paso 20.
 
 Arquitectura esperada:
 
@@ -509,66 +509,105 @@ OpenAI / modelos configurados
 Knowledge Base
 ```
 
-Funcionamiento:
+---
+
+## 18. Agente consultable RAG
+
+**Objetivo:** chat conversacional con búsqueda semántica en la Knowledge Base y captura de contenido por texto.
+
+**Estado:** Completado.
+
+Implementado en `chat.py` + `services/rag/` + `agents/query_agent.py`.
+
+Arquitectura:
 
 ```text
-Cada X minutos
+python chat.py
 ↓
-Cloud Run despierta
+Indexa Knowledge_Base/ en ChromaDB (text-embedding-3-small)
 ↓
-Revisa Drive
-↓
-Procesa nuevos archivos
-↓
-Se apaga
+Loop conversacional:
+  classify_intent(GPT-4o-mini) → QUERY | CAPTURE
+  QUERY   → QueryAgent → ChromaDB similarity search → GPT-4o-mini → respuesta
+  CAPTURE → AnalysisAgent → KnowledgeBaseAgent + TasksAgent + CalendarAgent → re-indexado
 ```
+
+Componentes creados:
+
+```text
+services/rag/
+├── base.py                  (interfaz RAGService)
+├── indexer.py               (chunkea KB por separador ---)
+├── chromadb_rag_service.py  (ChromaDB + embeddings + GPT)
+└── intent_classifier.py     (QUERY vs CAPTURE via GPT)
+
+agents/query_agent.py        (historial de conversación, MAX_HISTORY=10)
+prompts/query_agent.md       (instrucciones: no alucinar, citar fuente)
+chat.py                      (entrypoint, loop, comandos reset/salir)
+```
+
+Decisiones:
+- ChromaDB local persistente en `chroma_db/` (gitignored)
+- Re-indexado completo al arrancar y tras cada CAPTURE (< 2 segundos)
+- Modo CAPTURE en chat crea .md en `output/` y en `Knowledge_Base/` igual que los audios
 
 ---
 
-## 18. Agente consultable V2
+## 19. Refactor MessageHandler
 
-**Objetivo:** permitir consultas sobre la información organizada.
+**Objetivo:** extraer la lógica conversacional a un núcleo reutilizable por cualquier canal.
 
-**Estado:** Futuro.
+**Estado:** Completado.
 
-Ejemplos de preguntas:
+Componentes creados:
 
 ```text
-¿Qué pendientes tengo para mañana?
-¿Qué ideas tuve esta semana?
-¿Qué salió de mis reuniones?
-¿Qué tengo pendiente del proyecto BOYA?
-¿Qué decisiones se tomaron en mis últimas llamadas?
+core/
+├── message_handler.py   ← MessageHandler con process_message() y process_voice()
+└── agent_factory.py     ← build_message_handler() — inicializa todos los agentes
 ```
 
-Requerimientos probables:
-
-- Indexación de documentos Markdown.
-- Búsqueda semántica.
-- Memoria consultable.
-- Posible base vectorial.
+`chat.py` quedó reducido a ~40 líneas — solo el loop de terminal.
+Cualquier canal nuevo solo llama `handler.process_message(text)`.
 
 ---
 
-## 19. Interfaz conversacional V3
+## 20. Telegram — canal completo
 
-**Objetivo:** interactuar con el sistema de forma natural.
+**Objetivo:** usar Telegram como canal de captura y consulta desde el teléfono.
 
-**Estado:** Futuro.
+**Estado:** Completado.
 
-Opciones posibles:
+Implementado en `telegram_bot.py`.
+
+Flujo implementado:
 
 ```text
-- Chat web
-- Telegram
-- WhatsApp
-- Slack
-- App propia
+[Nota de voz] → descarga .ogg → Whisper → AnalysisAgent → KB + Tasks + Calendar → respuesta
+[Texto]       → classify_intent (GPT) → QUERY o CAPTURE → respuesta
+[/start]      → bienvenida
+[/reset]      → reinicia historial de conversación
 ```
 
-Nota:
+Decisiones:
+- Modo polling (no requiere URL pública — suficiente para uso personal local)
+- Whitelist via `TELEGRAM_ALLOWED_USER_ID` en `.env`
+- Audios de voz siempre son CAPTURE (no pasan por clasificador de intención)
+- Indicador "escribiendo..." mientras procesa para mejor UX
 
-WhatsApp se considera una integración futura porque puede requerir más configuración y costos adicionales.
+---
+
+## 21. App propia — dashboard central (FUTURO — nuevo proyecto)
+
+**Objetivo:** app con chat IA + vistas de ideas, tareas, calendario y resúmenes de reuniones.
+
+**Estado:** Futuro — será un proyecto separado.
+
+Componentes esperados:
+- Backend FastAPI reutilizando `core/message_handler.py`
+- Dashboard web: lista de ideas, tareas, resúmenes de reuniones, calendario
+- Chat IA embebido
+- La misma `core/` del agente actual como librería base
 
 ---
 
@@ -588,49 +627,31 @@ WhatsApp se considera una integración futura porque puede requerir más configu
 ✅ Prompts propios para agentes
 ✅ Clasificación real por tipo (6 categorías + JSON estructurado)
 ✅ Procesamiento múltiple de archivos
-✅ Knowledge Base Markdown V1 (Ideas, Tasks, Meetings, Reminders, Projects, General_Notes)
+✅ Knowledge Base Markdown V1
 ✅ Google Tasks (tareas con due date, prefijo de proyecto, deduplicación)
 ✅ Google Calendar (eventos con fecha + hora, deduplicación)
 ✅ Google Drive (Inbox → proceso local → KB en Drive → Processed)
 ✅ LangGraph (StateGraph con 9 nodos, estado compartido, manejo de errores formal)
+✅ Agente consultable RAG (ChromaDB + embeddings + chat dual QUERY/CAPTURE)
+✅ MessageHandler — process_message() canal-agnóstico
+✅ Telegram Bot (polling, voz + texto, whitelist de seguridad)
 
-➡️ Cloud Run + Scheduler
-➡️ Google Calendar
-➡️ Google Drive
-➡️ LangGraph
-➡️ Cloud Run
-➡️ Agente consultable
-➡️ Interfaz conversacional
+➡️ Cloud Run + Scheduler (paso 17 — siguiente cuando se quiera desplegar)
+🚀 App propia dashboard (paso 21 — nuevo proyecto futuro)
 ```
 
 ---
 
-# Meta actual del proyecto
+# Estado final del proyecto
 
-La meta inmediata es evolucionar el MVP actual hacia una V1 funcional:
-
-```text
-Archivos MP3/TXT/MD
-↓
-Clasificación automática
-↓
-Organización en Markdown
-↓
-Google Tasks cuando aplique
-↓
-Google Calendar cuando aplique
-```
-
-La meta futura es construir un sistema consultable tipo segundo cerebro:
+El sistema está completo como herramienta personal de segundo cerebro:
 
 ```text
-Captura
-↓
-Organización
-↓
-Memoria
-↓
-Consulta
-↓
-Seguimiento
+[Audios MP3 en PC]          → python main.py       → KB + Tasks + Calendar
+[Texto o voz en Telegram]   → python telegram_bot.py → KB + Tasks + Calendar
+[Consultas en terminal]     → python chat.py        → respuesta semántica
+[Consultas en Telegram]     → bot activo            → respuesta semántica
 ```
+
+Todo converge en la misma `Knowledge_Base/` local, sincronizable a Google Drive.
+La arquitectura está lista para conectarse a una app web (paso 21) o desplegarse en la nube (paso 17).

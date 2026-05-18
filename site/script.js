@@ -207,8 +207,8 @@ const ROADMAP = [
     evidence: "Verificado: pipeline completo con LangGraph, resultado idéntico al anterior"
   },
   {
-    num: 17, title: "Cloud Run + Scheduler", status: "current", icon: "🌐",
-    summary: "Ejecución automática en la nube sin depender del PC.",
+    num: 17, title: "Cloud Run + Scheduler", status: "pending", icon: "🌐",
+    summary: "Ejecución automática en la nube sin depender del PC. (Pausado — se retoma después del paso 20)",
     details: [
       "Contenerizar con Docker",
       "Deploy en Google Cloud Run",
@@ -218,24 +218,64 @@ const ROADMAP = [
     evidence: ""
   },
   {
-    num: 18, title: "Agente consultable V2", status: "pending", icon: "💬",
-    summary: "Consultar la base de conocimiento con lenguaje natural.",
+    num: 18, title: "Agente consultable RAG", status: "done", icon: "🔍",
+    summary: "Chat conversacional con búsqueda semántica en la Knowledge Base + captura por texto.",
     details: [
-      "¿Qué pendientes tengo para mañana?",
-      "¿Qué ideas tuve esta semana?",
-      "Indexación semántica de Markdown",
-      "Posible base vectorial"
+      "ChromaDB como vector store local persistente",
+      "OpenAI text-embedding-3-small para embeddings (~$0.02/M tokens)",
+      "Modo QUERY: búsqueda semántica, responde solo con info de la KB",
+      "Modo CAPTURE: texto nuevo → AnalysisAgent → KB + Tasks + Calendar + re-indexado",
+      "Clasificador de intención via GPT-4o-mini (QUERY vs CAPTURE)",
+      "Memoria de conversación dentro de la sesión (últimos 10 mensajes)",
+      "chat.py como punto de entrada independiente"
+    ],
+    evidence: "chat.py funcional: indexa 15+ chunks, clasifica intención correctamente, captura crea MD y re-indexa"
+  },
+  {
+    num: 19, title: "Refactor MessageHandler", status: "done", icon: "🔧",
+    summary: "process_message() como función central canal-agnóstica reutilizable por cualquier entrypoint.",
+    details: [
+      "core/message_handler.py — MessageHandler con process_message() y process_voice()",
+      "core/agent_factory.py — build_message_handler() inicializa todos los agentes",
+      "chat.py simplificado a solo el loop de terminal",
+      "Cualquier canal (Telegram, app web, API) llama a process_message() sin conocer el pipeline"
+    ],
+    evidence: "chat.py reducido a ~40 líneas; MessageHandler reutilizado por telegram_bot.py sin duplicar lógica"
+  },
+  {
+    num: 20, title: "Telegram — canal completo", status: "done", icon: "✈️",
+    summary: "Bot de Telegram que captura audios y texto, y responde consultas desde el teléfono.",
+    details: [
+      "telegram_bot.py en modo polling (sin URL pública requerida)",
+      "Texto → classify_intent (GPT) → QUERY o CAPTURE",
+      "Nota de voz (.ogg) → Whisper → AnalysisAgent → KB + Tasks + Calendar",
+      "Whitelist de usuario via TELEGRAM_ALLOWED_USER_ID (seguridad)",
+      "Comandos /start y /reset",
+      "Indicador 'escribiendo...' mientras procesa"
+    ],
+    evidence: "Bot funcional con token activo; whitelist configurada con user ID del propietario"
+  },
+  {
+    num: 17, title: "Cloud Run + Scheduler", status: "current", icon: "🌐",
+    summary: "Próximo paso: ejecución automática en la nube sin depender del PC.",
+    details: [
+      "Contenerizar con Docker",
+      "Deploy en Google Cloud Run",
+      "Cloud Scheduler para ejecuciones periódicas",
+      "Telegram webhook en lugar de polling",
+      "Logs y monitoreo básico"
     ],
     evidence: ""
   },
   {
-    num: 19, title: "Interfaz conversacional V3", status: "pending", icon: "📱",
-    summary: "Interacción natural desde múltiples canales.",
+    num: 21, title: "App propia — dashboard central", status: "pending", icon: "🚀",
+    summary: "Nuevo proyecto: app con chat IA + vistas de ideas, tareas, calendario y reuniones.",
     details: [
-      "Chat web propio",
-      "Integración con Telegram",
-      "Integración con WhatsApp",
-      "App móvil (futuro)"
+      "Backend FastAPI usando MessageHandler existente",
+      "Dashboard web: lista de ideas, tareas pendientes, resúmenes de reuniones",
+      "Vista de calendario integrada",
+      "Chat IA embebido en la app",
+      "Proyecto separado — reutiliza core/ del agente actual"
     ],
     evidence: ""
   }

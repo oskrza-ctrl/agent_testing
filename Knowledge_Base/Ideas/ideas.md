@@ -72,3 +72,53 @@ No detectado
 Ninguno
 
 **Tags:** #tablero-Notion #Second-Brain #seguimiento-avances #organización #idea
+
+---
+
+## 2026-05-18 — Creación de un Dashboard Web para Knowledge Base
+
+**Fuente:** chat:chat_20260518_072952  
+**Categoria:** Idea  
+**Proyecto relacionado:** No asignado  
+
+**Resumen:**  
+Se propone la idea de crear un dashboard web que permita visualizar la knowledge base. Esta iniciativa busca mejorar el acceso y la comprensión de la información disponible.
+
+**Ideas detectadas:**  
+- Crear un dashboard web para visualizar la knowledge base
+
+**Tareas detectadas:**  
+No detectado
+
+**Recordatorios:**  
+No detectado
+
+**Requiere revision:**  
+Ninguno
+
+**Tags:** #dashboard #web #knowledge base #visualización #idea
+
+---
+
+## 2026-05-18 — Propuesta para automatización de aplicación
+
+**Fuente:** chat:chat_20260518_075452  
+**Categoria:** Idea  
+**Proyecto relacionado:** No asignado  
+
+**Resumen:**  
+Se presenta una idea sobre la automatización de una aplicación en tiempo real. Se sugiere que se deben tomar las acciones necesarias para implementar esta automatización.
+
+**Ideas detectadas:**  
+- Automatizar una aplicación en tiempo real
+
+**Tareas detectadas:**  
+No detectado
+
+**Recordatorios:**  
+No detectado
+
+**Requiere revision:**  
+Ninguno
+
+**Tags:** #automatización #aplicación #tiempo real #idea

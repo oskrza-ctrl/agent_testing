@@ -1,7 +1,9 @@
 {
   "permissions": {
     "allow": [
-      "Bash(python -c ' *)"
+      "Bash(python -c ' *)",
+      "Bash(pip install *)",
+      "Bash(python -c \"from telegram import Update; print\\('python-telegram-bot OK'\\)\")"
     ]
   }
 }
