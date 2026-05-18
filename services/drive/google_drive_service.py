@@ -64,6 +64,13 @@ class GoogleDriveService:
         result = svc.files().list(q=query, fields="files(id,name)").execute()
         return result.get("files", [])
 
+    def list_files_in_folder(self, folder_id: str) -> list[dict]:
+        """Return list of {id, name, mimeType} for all items in a folder (non-recursive)."""
+        svc    = self._get_service()
+        query  = f"'{folder_id}' in parents and trashed=false"
+        result = svc.files().list(q=query, fields="files(id,name,mimeType)").execute()
+        return result.get("files", [])
+
     def download_file(self, file_id: str, dest_path: Path) -> None:
         """Download a Drive file to a local path."""
         svc     = self._get_service()

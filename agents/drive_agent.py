@@ -32,6 +32,28 @@ class DriveAgent:
 
     # ── Download phase ────────────────────────────────────
 
+    def download_kb(self) -> None:
+        """
+        Download existing Knowledge Base files from Drive to local Knowledge_Base/.
+        Called at startup in Cloud Run so accumulative files (ideas.md, tasks.md, etc.)
+        contain previous entries before new ones are appended.
+        """
+        print("[DriveAgent] Downloading existing Knowledge Base from Drive...")
+        self._download_folder_recursive(self.kb_folder_id, self.local_kb_dir)
+        print("[DriveAgent] Knowledge Base sync complete.")
+
+    def _download_folder_recursive(self, folder_id: str, local_dir: Path) -> None:
+        local_dir.mkdir(parents=True, exist_ok=True)
+        items = self.drive_svc.list_files_in_folder(folder_id)
+        for item in items:
+            if item["mimeType"] == "application/vnd.google-apps.folder":
+                self._download_folder_recursive(item["id"], local_dir / item["name"])
+            else:
+                local_path = local_dir / item["name"]
+                if not local_path.exists():
+                    self.drive_svc.download_file(item["id"], local_path)
+                    print(f"[DriveAgent] Downloaded: {item['name']}")
+
     def download_inbox(self) -> list[Path]:
         """
         List all MP3s in Drive Inbox, download new ones to local input/.

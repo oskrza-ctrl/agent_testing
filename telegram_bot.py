@@ -81,7 +81,9 @@ async def start_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
         "Puedes:\n"
         "- Escribirme una idea, tarea, recordatorio o nota para guardarla\n"
         "- Hacerme una pregunta sobre lo que tienes guardado\n"
-        "- Enviarme una nota de voz para transcribirla y guardarla\n\n"
+        "- Enviarme una nota de voz para transcribirla y guardarla\n"
+        "- Pedirme que procese los audios del inbox\n\n"
+        "/procesar — procesa los MP3s del Drive Inbox\n"
         "/reset — reinicia la conversacion\n"
     )
 
@@ -90,9 +92,21 @@ async def reset_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
     if not is_authorized(update):
         await update.message.reply_text("No autorizado.")
         return
-
     get_handler().reset_conversation()
     await update.message.reply_text("Conversacion reiniciada.")
+
+
+async def procesar_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    if not is_authorized(update):
+        await update.message.reply_text("No autorizado.")
+        return
+    await update.message.reply_text("Procesando audios del Inbox... esto puede tomar unos minutos.")
+    await context.bot.send_chat_action(chat_id=update.effective_chat.id, action=ChatAction.TYPING)
+    try:
+        response = get_handler().run_pipeline()
+    except Exception as e:
+        response = f"Error al procesar: {e}"
+    await update.message.reply_text(response)
 
 
 async def text_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -161,8 +175,9 @@ def main() -> None:
 
     app = Application.builder().token(token).build()
 
-    app.add_handler(CommandHandler("start", start_handler))
-    app.add_handler(CommandHandler("reset", reset_handler))
+    app.add_handler(CommandHandler("start",    start_handler))
+    app.add_handler(CommandHandler("reset",    reset_handler))
+    app.add_handler(CommandHandler("procesar", procesar_handler))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, text_handler))
     app.add_handler(MessageHandler(filters.VOICE | filters.AUDIO, voice_handler))
 

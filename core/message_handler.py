@@ -67,9 +67,99 @@ class MessageHandler:
     def process_message(self, text: str) -> str:
         """Classify intent and route to the right handler. Returns a response string."""
         intent = classify_intent(self.client, text)
+        if intent == "PIPELINE":
+            return self.run_pipeline()
         if intent == "CAPTURE":
             return self._handle_capture(text)
         return self.query_agent.chat(text)
+
+    def run_pipeline(self) -> str:
+        """Run the full MP3 processing pipeline and return a conversational summary."""
+        import subprocess, sys
+        from datetime import datetime
+
+        print("[MessageHandler] Iniciando pipeline de procesamiento...")
+        start_time = datetime.now()
+
+        try:
+            result = subprocess.run(
+                [sys.executable, "main.py"],
+                capture_output=True, text=True, timeout=600
+            )
+        except subprocess.TimeoutExpired:
+            return "El pipeline tardó demasiado (más de 10 min). Revisa input/ manualmente."
+        except Exception as e:
+            return f"Error al correr el pipeline: {e}"
+
+        if result.returncode != 0:
+            return f"El pipeline terminó con errores:\n{(result.stdout or '')[-500:]}"
+
+        # Re-index para que los nuevos contenidos sean consultables
+        self.rag_service.index_kb(self.kb_dir)
+
+        # Leer las nuevas entradas de la KB creadas durante este run
+        new_entries = self._get_new_kb_entries(start_time)
+
+        if not new_entries:
+            return "Revisé el inbox pero no había archivos nuevos para procesar."
+
+        # GPT genera una respuesta conversacional sobre lo que se procesó
+        return self._summarize_pipeline_results(new_entries)
+
+    def _get_new_kb_entries(self, since: "datetime") -> list[dict]:
+        """Collect KB entries written after 'since' timestamp."""
+        import re
+        from datetime import datetime
+
+        entries = []
+        if not self.kb_dir.exists():
+            return entries
+
+        for md_file in self.kb_dir.rglob("*.md"):
+            # Skip dedup JSONs
+            if md_file.suffix != ".md":
+                continue
+            mtime = datetime.fromtimestamp(md_file.stat().st_mtime)
+            if mtime < since:
+                continue
+
+            content = md_file.read_text(encoding="utf-8")
+            # Get the last entry (after the last separator)
+            parts = re.split(r"\n---\n\n", content)
+            last = parts[-1].strip()
+            if len(last) > 50:
+                entries.append({
+                    "file": md_file.name,
+                    "folder": md_file.parent.name,
+                    "content": last[:600],
+                })
+
+        return entries
+
+    def _summarize_pipeline_results(self, entries: list[dict]) -> str:
+        """Ask GPT to generate a conversational summary of what was just processed."""
+        context = "\n\n---\n\n".join(
+            f"[{e['folder']}] {e['file']}:\n{e['content']}"
+            for e in entries
+        )
+        prompt = (
+            "El usuario acaba de pedirte que proceses sus audios. "
+            "Aquí están las nuevas entradas que se guardaron en su base de conocimiento:\n\n"
+            f"{context}\n\n"
+            "Responde de forma conversacional y natural, como si fueras su asistente personal. "
+            "Cuéntale qué se procesó, qué tipo de contenido era (idea, tarea, reunión, etc.), "
+            "los puntos más importantes y si se crearon tareas o eventos. "
+            "Sé conciso pero informativo. No uses listas con bullets si puedes evitarlo."
+        )
+        response = self.client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[
+                {"role": "system", "content": "Eres el asistente personal del usuario, conoces su base de conocimiento."},
+                {"role": "user",   "content": prompt},
+            ],
+            temperature=0.5,
+        )
+        return response.choices[0].message.content.strip()
 
     def process_voice(self, file_path: Path) -> str:
         """Transcribe an audio file and process it as CAPTURE. Always saves to KB."""

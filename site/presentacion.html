@@ -1,0 +1,1213 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Second Brain Agent — Presentación</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<style>
+:root {
+  --bg: #080812;
+  --surface: #0f0f1e;
+  --card: #161628;
+  --card2: #1c1c35;
+  --accent: #7c6fff;
+  --accent2: #a78bfa;
+  --green: #34d399;
+  --blue: #60a5fa;
+  --pink: #f472b6;
+  --text: #e8e8f0;
+  --muted: #6b6b8f;
+  --border: #2a2a45;
+  --eli-bg: #14100a;
+  --eli-surface: #1e1608;
+  --eli-card: #261e0a;
+  --eli-accent: #fbbf24;
+  --eli-accent2: #f59e0b;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { width: 100%; height: 100%; overflow: hidden; background: var(--bg); }
+body { font-family: 'Space Grotesk', sans-serif; color: var(--text); }
+
+/* ── PRESENTATION SHELL ─────────────────────────── */
+#deck { width: 100vw; height: 100vh; position: relative; overflow: hidden; }
+
+.slide {
+  position: absolute; inset: 0;
+  display: flex; flex-direction: column;
+  padding: 48px 64px 80px;
+  opacity: 0; pointer-events: none;
+  transition: opacity 0.35s ease, transform 0.35s ease;
+  transform: translateX(40px);
+  overflow-y: auto;
+}
+.slide.active {
+  opacity: 1; pointer-events: all; transform: translateX(0);
+}
+.slide.exit {
+  opacity: 0; transform: translateX(-40px);
+}
+
+/* ELI5 base */
+.eli5 { background: var(--eli-bg); }
+.eli5 .slide-inner { background: var(--eli-surface); border-color: rgba(251,191,36,.15); }
+
+/* ── PROGRESS & NAV ─────────────────────────────── */
+#progress {
+  position: fixed; bottom: 0; left: 0; width: 100%; height: 3px;
+  background: rgba(255,255,255,.06); z-index: 100;
+}
+#progress-fill {
+  height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent2));
+  transition: width .4s ease;
+}
+#nav {
+  position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%);
+  display: flex; align-items: center; gap: 20px; z-index: 101;
+  background: rgba(22,22,40,.85); border: 1px solid var(--border);
+  backdrop-filter: blur(12px); border-radius: 40px; padding: 8px 24px;
+}
+#nav button {
+  background: none; border: none; color: var(--accent2); cursor: pointer;
+  font-size: 18px; padding: 4px 8px; border-radius: 6px;
+  transition: background .2s; font-family: inherit;
+}
+#nav button:hover { background: rgba(124,111,255,.2); }
+#nav button:disabled { color: var(--muted); cursor: default; }
+#counter { font-size: 13px; color: var(--muted); min-width: 52px; text-align: center; letter-spacing: .5px; }
+
+/* ── SLIDE COMPONENTS ───────────────────────────── */
+.slide-badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 11px; font-weight: 600; letter-spacing: 1.2px; text-transform: uppercase;
+  padding: 4px 12px; border-radius: 20px; margin-bottom: 16px; align-self: flex-start;
+}
+.badge-tech { background: rgba(124,111,255,.18); color: var(--accent2); border: 1px solid rgba(124,111,255,.3); }
+.badge-eli5 { background: rgba(251,191,36,.18); color: var(--eli-accent); border: 1px solid rgba(251,191,36,.3); }
+.badge-gen  { background: rgba(52,211,153,.15); color: var(--green); border: 1px solid rgba(52,211,153,.25); }
+
+h1.slide-title {
+  font-size: clamp(28px, 4vw, 48px); font-weight: 700;
+  line-height: 1.15; margin-bottom: 8px;
+  background: linear-gradient(135deg, var(--text) 40%, var(--accent2));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+}
+.eli5 h1.slide-title {
+  background: linear-gradient(135deg, var(--text) 40%, var(--eli-accent));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+}
+h2.slide-title { font-size: clamp(22px, 3vw, 36px); font-weight: 700; margin-bottom: 8px; }
+.slide-sub { color: var(--muted); font-size: 15px; margin-bottom: 32px; }
+
+.slide-inner {
+  flex: 1; display: flex; flex-direction: column; gap: 20px;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 16px; padding: 32px; overflow: auto;
+}
+.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+.three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+
+.card {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 12px; padding: 20px;
+}
+.eli5 .card { background: var(--eli-card); border-color: rgba(251,191,36,.12); }
+
+.card h3 { font-size: 14px; font-weight: 600; margin-bottom: 8px; color: var(--accent2); }
+.eli5 .card h3 { color: var(--eli-accent); }
+.card p, .card li { font-size: 14px; color: var(--muted); line-height: 1.7; }
+.card ul { padding-left: 16px; }
+
+pre code.hljs { border-radius: 10px; font-family: 'JetBrains Mono', monospace; font-size: 13px !important; padding: 20px !important; }
+
+.tag {
+  display: inline-block; padding: 3px 10px; border-radius: 6px;
+  font-size: 12px; font-weight: 500; margin: 3px;
+  background: var(--card2); border: 1px solid var(--border); color: var(--muted);
+}
+
+/* ── SLIDE 1 COVER ──────────────────────────────── */
+.cover-layout {
+  display: flex; flex-direction: column; align-items: flex-start;
+  justify-content: center; height: 100%; gap: 24px;
+}
+.cover-layout h1 { font-size: clamp(42px, 6vw, 80px); font-weight: 700; line-height: 1;
+  background: linear-gradient(135deg, #fff 30%, var(--accent2) 70%, var(--pink));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+.cover-layout .tagline { font-size: 18px; color: var(--muted); max-width: 600px; line-height: 1.6; }
+.tech-badges { display: flex; flex-wrap: wrap; gap: 8px; }
+.tech-badge {
+  padding: 6px 14px; border-radius: 8px; font-size: 12px; font-weight: 600;
+  background: var(--card); border: 1px solid var(--border); color: var(--text);
+  display: flex; align-items: center; gap: 6px;
+}
+.cover-glow {
+  position: absolute; right: -100px; top: 50%; transform: translateY(-50%);
+  width: 600px; height: 600px; border-radius: 50%;
+  background: radial-gradient(circle, rgba(124,111,255,.12) 0%, transparent 70%);
+  pointer-events: none;
+}
+.entry-cards { display: flex; gap: 12px; flex-wrap: wrap; }
+.entry-card {
+  background: var(--card); border: 1px solid var(--border); border-radius: 10px;
+  padding: 12px 18px; font-size: 13px;
+}
+.entry-card code { font-family: 'JetBrains Mono', monospace; color: var(--accent2); }
+.entry-card span { color: var(--muted); font-size: 12px; display: block; margin-top: 2px; }
+
+/* ── FLOW STEP ───────────────────────────────────── */
+.flow-steps { display: flex; flex-direction: column; gap: 10px; }
+.flow-step {
+  display: flex; align-items: flex-start; gap: 16px; padding: 14px 16px;
+  background: var(--card); border: 1px solid var(--border); border-radius: 10px;
+}
+.step-num {
+  width: 28px; height: 28px; border-radius: 50%; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 700; background: var(--accent); color: #fff;
+}
+.step-content { flex: 1; }
+.step-content strong { font-size: 14px; display: block; }
+.step-content span { font-size: 12px; color: var(--muted); }
+
+/* ── ELI5 SPECIAL ───────────────────────────────── */
+.eli5-hero {
+  display: flex; align-items: center; justify-content: center;
+  font-size: 80px; padding: 12px;
+}
+.eli5-big { font-size: 18px; line-height: 1.8; color: var(--text); }
+.eli5-accent-text { color: var(--eli-accent); font-weight: 600; }
+
+/* ── NODE BADGE ─────────────────────────────────── */
+.nodes-row { display: flex; flex-direction: column; gap: 6px; }
+.node-item {
+  display: flex; align-items: center; gap: 10px; padding: 8px 14px;
+  background: var(--card2); border-radius: 8px; font-size: 13px;
+}
+.node-dot {
+  width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0;
+}
+.node-opt { background: #f59e0b; }
+.node-req { background: var(--accent); }
+.node-arrow { color: var(--muted); font-size: 16px; }
+
+/* ── DECISION TABLE ─────────────────────────────── */
+.dec-table { display: flex; flex-direction: column; gap: 8px; }
+.dec-row {
+  display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; padding: 12px 16px;
+  background: var(--card); border-radius: 8px; font-size: 13px;
+  border: 1px solid var(--border);
+}
+.dec-row span:first-child { color: var(--accent2); font-weight: 600; }
+.dec-row span:nth-child(2) { color: var(--muted); }
+.dec-row span:last-child { color: var(--green); font-size: 12px; }
+
+/* ── RESULT STAT ────────────────────────────────── */
+.stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+.stat-card {
+  background: var(--card); border: 1px solid var(--border); border-radius: 12px;
+  padding: 20px; text-align: center;
+}
+.stat-num { font-size: 36px; font-weight: 700; color: var(--accent2); display: block; }
+.stat-label { font-size: 13px; color: var(--muted); display: block; margin-top: 4px; }
+
+/* ── SCROLLBAR ──────────────────────────────────── */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+</style>
+</head>
+<body>
+<div id="deck">
+
+<!-- ════════════════════════════════════════════════
+     SLIDE 1 — PORTADA
+════════════════════════════════════════════════ -->
+<div class="slide active" id="s1">
+  <div class="cover-glow"></div>
+  <div class="cover-layout">
+    <div class="slide-badge badge-gen">Proyecto Personal de IA</div>
+    <h1>Second Brain<br>Agent</h1>
+    <p class="tagline">Un sistema que convierte tus notas de voz en conocimiento organizado — automáticamente, sin que tengas que hacer nada.</p>
+    <div class="entry-cards">
+      <div class="entry-card"><code>python main.py</code><span>Procesa MP3s del inbox</span></div>
+      <div class="entry-card"><code>python chat.py</code><span>Chat en terminal</span></div>
+      <div class="entry-card"><code>python telegram_bot.py</code><span>Bot en tu teléfono</span></div>
+    </div>
+    <div class="tech-badges">
+      <div class="tech-badge">🐍 Python</div>
+      <div class="tech-badge">🤖 OpenAI</div>
+      <div class="tech-badge">🕸️ LangGraph</div>
+      <div class="tech-badge">🔍 ChromaDB</div>
+      <div class="tech-badge">✈️ Telegram</div>
+      <div class="tech-badge">📁 Google APIs</div>
+      <div class="tech-badge">📝 Markdown + Obsidian</div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════
+     SLIDE 2 — EL PROBLEMA
+════════════════════════════════════════════════ -->
+<div class="slide" id="s2">
+  <div class="slide-badge badge-gen">El Problema</div>
+  <h1 class="slide-title">¿Qué dolor resuelve?</h1>
+  <p class="slide-sub">Ideas que se pierden. Tareas que no llegan a ninguna lista. Reuniones que se olvidan.</p>
+  <div class="slide-inner">
+    <div class="two-col">
+      <div>
+        <h3 style="font-size:16px;margin-bottom:14px;color:#f87171;">❌ Antes</h3>
+        <div class="card" style="border-color:rgba(248,113,113,.2);margin-bottom:10px;">
+          <p>🎙️ Grabo una nota de voz con una idea</p>
+        </div>
+        <div class="card" style="border-color:rgba(248,113,113,.2);margin-bottom:10px;">
+          <p>📱 La nota queda perdida en WhatsApp o en el teléfono</p>
+        </div>
+        <div class="card" style="border-color:rgba(248,113,113,.2);margin-bottom:10px;">
+          <p>❓ Nunca llega a una lista de tareas ni a Obsidian</p>
+        </div>
+        <div class="card" style="border-color:rgba(248,113,113,.2);">
+          <p>😤 Tengo que transcribir, clasificar y organizar manualmente</p>
+        </div>
+      </div>
+      <div>
+        <h3 style="font-size:16px;margin-bottom:14px;color:#34d399;">✅ Después</h3>
+        <div class="card" style="border-color:rgba(52,211,153,.2);margin-bottom:10px;">
+          <p>🎙️ Grabo una nota de voz o mando mensaje a Telegram</p>
+        </div>
+        <div class="card" style="border-color:rgba(52,211,153,.2);margin-bottom:10px;">
+          <p>🤖 El sistema transcribe, clasifica y organiza automáticamente</p>
+        </div>
+        <div class="card" style="border-color:rgba(52,211,153,.2);margin-bottom:10px;">
+          <p>📂 La idea llega a <code style="font-family:monospace;color:var(--accent2)">ideas.md</code>, la tarea a Google Tasks, el evento al calendario</p>
+        </div>
+        <div class="card" style="border-color:rgba(52,211,153,.2);">
+          <p>🔍 Puedo preguntar "¿qué ideas tuve esta semana?" y obtener una respuesta</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════
+     SLIDE 3 — ARQUITECTURA GENERAL
+════════════════════════════════════════════════ -->
+<div class="slide" id="s3">
+  <div class="slide-badge badge-gen">Arquitectura</div>
+  <h1 class="slide-title">El sistema completo</h1>
+  <p class="slide-sub">Tres formas de entrar. Un solo pipeline. Múltiples destinos.</p>
+  <div class="slide-inner" style="padding:20px;">
+    <svg viewBox="0 0 820 380" style="width:100%;height:100%;max-height:340px;" xmlns="http://www.w3.org/2000/svg" font-family="Space Grotesk, sans-serif">
+      <!-- Inputs -->
+      <rect x="10" y="60" width="110" height="38" rx="8" fill="#1c1c35" stroke="#7c6fff" stroke-width="1.5"/>
+      <text x="65" y="82" text-anchor="middle" fill="#e8e8f0" font-size="12" font-weight="600">🎵 MP3 / main.py</text>
+      <rect x="10" y="110" width="110" height="38" rx="8" fill="#1c1c35" stroke="#7c6fff" stroke-width="1.5"/>
+      <text x="65" y="132" text-anchor="middle" fill="#e8e8f0" font-size="12" font-weight="600">💬 chat.py</text>
+      <rect x="10" y="160" width="110" height="38" rx="8" fill="#1c1c35" stroke="#7c6fff" stroke-width="1.5"/>
+      <text x="65" y="182" text-anchor="middle" fill="#e8e8f0" font-size="12" font-weight="600">✈️ Telegram</text>
+      <!-- Arrows to core -->
+      <line x1="120" y1="79" x2="158" y2="130" stroke="#6b6b8f" stroke-width="1.5" marker-end="url(#arr)"/>
+      <line x1="120" y1="129" x2="158" y2="130" stroke="#6b6b8f" stroke-width="1.5" marker-end="url(#arr)"/>
+      <line x1="120" y1="179" x2="158" y2="130" stroke="#6b6b8f" stroke-width="1.5" marker-end="url(#arr)"/>
+      <!-- Core box -->
+      <rect x="160" y="100" width="140" height="60" rx="10" fill="#2a1f5e" stroke="#a78bfa" stroke-width="2"/>
+      <text x="230" y="124" text-anchor="middle" fill="#a78bfa" font-size="12" font-weight="700">MessageHandler</text>
+      <text x="230" y="142" text-anchor="middle" fill="#9090c0" font-size="10">process_message()</text>
+      <!-- Arrow to pipeline -->
+      <line x1="300" y1="130" x2="338" y2="130" stroke="#a78bfa" stroke-width="2" marker-end="url(#arr2)"/>
+      <!-- Pipeline box -->
+      <rect x="340" y="80" width="150" height="100" rx="10" fill="#0f2040" stroke="#60a5fa" stroke-width="1.5"/>
+      <text x="415" y="100" text-anchor="middle" fill="#60a5fa" font-size="11" font-weight="700">LangGraph Pipeline</text>
+      <text x="415" y="117" text-anchor="middle" fill="#6b6b8f" font-size="10">① Transcription</text>
+      <text x="415" y="131" text-anchor="middle" fill="#6b6b8f" font-size="10">② Analysis</text>
+      <text x="415" y="145" text-anchor="middle" fill="#6b6b8f" font-size="10">③–⑨ KB·Tasks·Cal·Drive</text>
+      <text x="415" y="162" text-anchor="middle" fill="#6b6b8f" font-size="10">⑧ Archive</text>
+      <!-- Arrows to outputs -->
+      <line x1="490" y1="100" x2="528" y2="85" stroke="#34d399" stroke-width="1.5" marker-end="url(#arrg)"/>
+      <line x1="490" y1="120" x2="528" y2="120" stroke="#34d399" stroke-width="1.5" marker-end="url(#arrg)"/>
+      <line x1="490" y1="140" x2="528" y2="155" stroke="#fbbf24" stroke-width="1.5" marker-end="url(#arro)"/>
+      <line x1="490" y1="155" x2="528" y2="200" stroke="#fbbf24" stroke-width="1.5" marker-end="url(#arro)"/>
+      <line x1="490" y1="168" x2="528" y2="245" stroke="#fbbf24" stroke-width="1.5" marker-end="url(#arro)"/>
+      <!-- Output boxes -->
+      <rect x="530" y="60" width="140" height="38" rx="8" fill="#0a2010" stroke="#34d399" stroke-width="1.5"/>
+      <text x="600" y="82" text-anchor="middle" fill="#34d399" font-size="11" font-weight="600">📂 Knowledge Base</text>
+      <rect x="530" y="105" width="140" height="38" rx="8" fill="#0a2010" stroke="#34d399" stroke-width="1.5"/>
+      <text x="600" y="127" text-anchor="middle" fill="#34d399" font-size="11" font-weight="600">✅ Google Tasks</text>
+      <rect x="530" y="140" width="140" height="38" rx="8" fill="#1a1000" stroke="#fbbf24" stroke-width="1.5"/>
+      <text x="600" y="162" text-anchor="middle" fill="#fbbf24" font-size="11" font-weight="600">📅 Google Calendar</text>
+      <rect x="530" y="185" width="140" height="38" rx="8" fill="#1a1000" stroke="#fbbf24" stroke-width="1.5"/>
+      <text x="600" y="207" text-anchor="middle" fill="#fbbf24" font-size="11" font-weight="600">☁️ Google Drive</text>
+      <rect x="530" y="230" width="140" height="38" rx="8" fill="#1a1000" stroke="#fbbf24" stroke-width="1.5"/>
+      <text x="600" y="252" text-anchor="middle" fill="#fbbf24" font-size="11" font-weight="600">📦 processed/</text>
+      <!-- RAG box below -->
+      <rect x="160" y="200" width="140" height="50" rx="10" fill="#0a200a" stroke="#34d399" stroke-width="1.5"/>
+      <text x="230" y="221" text-anchor="middle" fill="#34d399" font-size="11" font-weight="700">RAG + ChromaDB</text>
+      <text x="230" y="238" text-anchor="middle" fill="#6b6b8f" font-size="10">consulta semántica</text>
+      <line x1="230" y1="160" x2="230" y2="199" stroke="#34d399" stroke-width="1.5" stroke-dasharray="4,2" marker-end="url(#arrg)"/>
+      <!-- Line from KB to RAG -->
+      <line x1="545" y1="98" x2="305" y2="215" stroke="#34d399" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrg)"/>
+      <!-- Defs -->
+      <defs>
+        <marker id="arr" viewBox="0 0 8 8" markerWidth="6" markerHeight="6" refX="6" refY="4" orient="auto"><path d="M0,1 L0,7 L7,4z" fill="#6b6b8f"/></marker>
+        <marker id="arr2" viewBox="0 0 8 8" markerWidth="6" markerHeight="6" refX="6" refY="4" orient="auto"><path d="M0,1 L0,7 L7,4z" fill="#a78bfa"/></marker>
+        <marker id="arrg" viewBox="0 0 8 8" markerWidth="6" markerHeight="6" refX="6" refY="4" orient="auto"><path d="M0,1 L0,7 L7,4z" fill="#34d399"/></marker>
+        <marker id="arro" viewBox="0 0 8 8" markerWidth="6" markerHeight="6" refX="6" refY="4" orient="auto"><path d="M0,1 L0,7 L7,4z" fill="#fbbf24"/></marker>
+      </defs>
+    </svg>
+    <div class="three-col" style="margin-top:8px;">
+      <div class="card"><p style="text-align:center;font-size:12px;">🟣 Núcleo canal-agnóstico</p></div>
+      <div class="card"><p style="text-align:center;font-size:12px;color:var(--green)">🟢 Outputs locales</p></div>
+      <div class="card"><p style="text-align:center;font-size:12px;color:#fbbf24">🟡 Integraciones Google (opcionales)</p></div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════
+     SLIDE 4 — TÉCNICO: OpenAI APIs
+════════════════════════════════════════════════ -->
+<div class="slide" id="s4">
+  <div class="slide-badge badge-tech">Técnico</div>
+  <h1 class="slide-title">OpenAI APIs</h1>
+  <p class="slide-sub">Dos modelos, dos tareas, costos mínimos.</p>
+  <div class="slide-inner">
+    <div class="two-col">
+      <div>
+        <div class="card" style="margin-bottom:12px;">
+          <h3>🎙️ Whisper-1 — Transcripción</h3>
+          <p>Convierte MP3 (y .ogg de Telegram) en texto. Soporta español, inglés y 50+ idiomas automáticamente.</p>
+          <p style="margin-top:8px;color:var(--green);">~$0.006 / minuto de audio</p>
+        </div>
+        <div class="card">
+          <h3>🧠 GPT-4o-mini — Análisis</h3>
+          <p>Clasifica el transcript en 6 categorías, extrae tareas/ideas/recordatorios y devuelve JSON estructurado con 15 campos.</p>
+          <p style="margin-top:8px;color:var(--green);">~$0.15 / millón de tokens</p>
+          <p style="font-size:12px;color:var(--muted);margin-top:4px;">16× más barato que GPT-4o</p>
+        </div>
+      </div>
+      <div>
+        <pre><code class="language-python"># Whisper: una llamada, devuelve texto
+with open(audio_path, "rb") as f:
+    r = client.audio.transcriptions.create(
+        model="whisper-1", file=f
+    )
+transcript = r.text
+
+# GPT-4o-mini: JSON mode garantiza JSON válido
+r = client.chat.completions.create(
+    model="gpt-4o-mini",
+    messages=[{"role":"system","content":prompt},
+              {"role":"user","content":transcript}],
+    response_format={"type":"json_object"},
+    temperature=0.3
+)
+data = json.loads(r.choices[0].message.content)</code></pre>
+        <div class="card" style="margin-top:12px;">
+          <h3>text-embedding-3-small — RAG</h3>
+          <p>Convierte texto en vectores numéricos para búsqueda semántica en ChromaDB.</p>
+          <p style="margin-top:6px;color:var(--green);">~$0.02 / millón de tokens</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════
+     SLIDE 5 — ELI5: OpenAI APIs
+════════════════════════════════════════════════ -->
+<div class="slide eli5" id="s5">
+  <div class="slide-badge badge-eli5">💡 Explícalo simple</div>
+  <h1 class="slide-title">OpenAI APIs</h1>
+  <p class="slide-sub" style="color:rgba(251,191,36,.6);">Como tener un asistente con super poderes</p>
+  <div class="slide-inner">
+    <div class="two-col">
+      <div style="display:flex;flex-direction:column;gap:16px;">
+        <div class="card">
+          <div style="font-size:48px;text-align:center;margin-bottom:12px;">👂</div>
+          <p class="eli5-big"><span class="eli5-accent-text">Whisper</span> es como una oreja mágica que puede escuchar cualquier audio y escribir exactamente lo que se dijo, en cualquier idioma, sin equivocarse.</p>
+        </div>
+        <div class="card">
+          <div style="font-size:48px;text-align:center;margin-bottom:12px;">🧠</div>
+          <p class="eli5-big"><span class="eli5-accent-text">GPT-4o-mini</span> lee lo que Whisper escribió y lo entiende: sabe si es una tarea, una idea o un recordatorio, y lo organiza en una ficha con todos los datos importantes.</p>
+        </div>
+      </div>
+      <svg viewBox="0 0 300 280" style="width:100%;" xmlns="http://www.w3.org/2000/svg" font-family="Space Grotesk,sans-serif">
+        <rect x="80" y="20" width="140" height="50" rx="12" fill="#261e0a" stroke="#fbbf24" stroke-width="2"/>
+        <text x="150" y="40" text-anchor="middle" fill="#fbbf24" font-size="24">🎙️</text>
+        <text x="150" y="62" text-anchor="middle" fill="#e8e8f0" font-size="12">Audio de voz</text>
+        <line x1="150" y1="70" x2="150" y2="98" stroke="#fbbf24" stroke-width="2" marker-end="url(#eli-arr)"/>
+        <rect x="80" y="100" width="140" height="50" rx="12" fill="#0f2015" stroke="#34d399" stroke-width="2"/>
+        <text x="150" y="120" text-anchor="middle" fill="#34d399" font-size="20">👂 Whisper</text>
+        <text x="150" y="140" text-anchor="middle" fill="#9090c0" font-size="11">transcribe</text>
+        <line x1="150" y1="150" x2="150" y2="178" stroke="#34d399" stroke-width="2" marker-end="url(#eli-arrg)"/>
+        <rect x="60" y="180" width="180" height="50" rx="12" fill="#0f1520" stroke="#60a5fa" stroke-width="2"/>
+        <text x="150" y="200" text-anchor="middle" fill="#60a5fa" font-size="20">🧠 GPT-4o-mini</text>
+        <text x="150" y="218" text-anchor="middle" fill="#9090c0" font-size="11">clasifica y extrae datos</text>
+        <line x1="150" y1="230" x2="150" y2="258" stroke="#60a5fa" stroke-width="2" marker-end="url(#eli-arrb)"/>
+        <rect x="75" y="260" width="150" height="30" rx="8" fill="#1c1c35" stroke="#a78bfa" stroke-width="1.5"/>
+        <text x="150" y="280" text-anchor="middle" fill="#a78bfa" font-size="12">📦 AnalysisResult</text>
+        <defs>
+          <marker id="eli-arr" viewBox="0 0 8 8" markerWidth="6" markerHeight="6" refX="6" refY="4" orient="auto"><path d="M0,1 L0,7 L7,4z" fill="#fbbf24"/></marker>
+          <marker id="eli-arrg" viewBox="0 0 8 8" markerWidth="6" markerHeight="6" refX="6" refY="4" orient="auto"><path d="M0,1 L0,7 L7,4z" fill="#34d399"/></marker>
+          <marker id="eli-arrb" viewBox="0 0 8 8" markerWidth="6" markerHeight="6" refX="6" refY="4" orient="auto"><path d="M0,1 L0,7 L7,4z" fill="#60a5fa"/></marker>
+        </defs>
+      </svg>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════
+     SLIDE 6 — TÉCNICO: LangGraph
+════════════════════════════════════════════════ -->
+<div class="slide" id="s6">
+  <div class="slide-badge badge-tech">Técnico</div>
+  <h1 class="slide-title">LangGraph</h1>
+  <p class="slide-sub">Un grafo formal de 9 nodos que reemplaza código imperativo.</p>
+  <div class="slide-inner">
+    <div class="two-col">
+      <div>
+        <div class="nodes-row">
+          <div class="node-item"><div class="node-dot node-req"></div><span>① transcription_node</span><span style="margin-left:auto;color:var(--muted);font-size:11px;">→ transcript</span></div>
+          <div class="node-arrow" style="padding-left:10px;">↓</div>
+          <div class="node-item"><div class="node-dot node-req"></div><span>② analysis_node</span><span style="margin-left:auto;color:var(--muted);font-size:11px;">→ result</span></div>
+          <div class="node-arrow" style="padding-left:10px;">↓</div>
+          <div class="node-item"><div class="node-dot node-req"></div><span>③ markdown_node</span></div>
+          <div class="node-arrow" style="padding-left:10px;">↓</div>
+          <div class="node-item"><div class="node-dot node-req"></div><span>④ knowledge_base_node</span></div>
+          <div class="node-arrow" style="padding-left:10px;">↓</div>
+          <div class="node-item"><div class="node-dot node-opt"></div><span>⑤ drive_sync_node</span><span style="margin-left:auto;font-size:10px;color:#f59e0b;">opcional</span></div>
+          <div class="node-arrow" style="padding-left:10px;">↓</div>
+          <div class="node-item"><div class="node-dot node-opt"></div><span>⑥ tasks_node</span><span style="margin-left:auto;font-size:10px;color:#f59e0b;">opcional</span></div>
+          <div class="node-arrow" style="padding-left:10px;">↓</div>
+          <div class="node-item"><div class="node-dot node-opt"></div><span>⑦ calendar_node</span><span style="margin-left:auto;font-size:10px;color:#f59e0b;">opcional</span></div>
+          <div class="node-arrow" style="padding-left:10px;">↓</div>
+          <div class="node-item"><div class="node-dot node-req"></div><span>⑧ archive_node</span></div>
+          <div class="node-arrow" style="padding-left:10px;">↓</div>
+          <div class="node-item"><div class="node-dot node-opt"></div><span>⑨ drive_processed_node</span><span style="margin-left:auto;font-size:10px;color:#f59e0b;">opcional</span></div>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:12px;">
+        <pre><code class="language-python">class PipelineState(TypedDict):
+    mp3_path: Any
+    transcript: str
+    result: Any        # AnalysisResult
+    error: Optional[str]
+
+# Cada nodo recibe estado, devuelve cambios
+def node(state: PipelineState) -> dict:
+    if state.get("error"):
+        return {}       # early return si hay error
+    result = agent.run(state["transcript"])
+    return {"result": result}</code></pre>
+        <div class="card">
+          <h3>🛡️ Error handling</h3>
+          <p>Si cualquier nodo falla → escribe <code style="font-family:monospace;color:var(--pink)">state["error"]</code> → todos los siguientes hacen early return → el MP3 <strong>no se mueve</strong> de input/.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════
+     SLIDE 7 — ELI5: LangGraph
+════════════════════════════════════════════════ -->
+<div class="slide eli5" id="s7">
+  <div class="slide-badge badge-eli5">💡 Explícalo simple</div>
+  <h1 class="slide-title">LangGraph</h1>
+  <p class="slide-sub" style="color:rgba(251,191,36,.6);">Como una cadena de montaje en una fábrica</p>
+  <div class="slide-inner">
+    <div class="two-col">
+      <div class="card">
+        <p class="eli5-big">Imagina una <span class="eli5-accent-text">fábrica de chocolates</span>. El cacao pasa por varias estaciones: moler, mezclar, moldear, envolver...</p>
+        <br>
+        <p class="eli5-big">Cada estación hace <span class="eli5-accent-text">una sola cosa</span>. Si la estación de moldear falla, el chocolate no llega al empaque. No se desperdicia, solo se detiene.</p>
+        <br>
+        <p class="eli5-big">LangGraph es esa cadena de montaje para el audio. El MP3 entra, pasa por 9 "estaciones" (agentes) y sale organizado. Si algo falla, el audio queda intacto.</p>
+      </div>
+      <svg viewBox="0 0 240 320" style="width:100%;max-height:300px;" xmlns="http://www.w3.org/2000/svg" font-family="Space Grotesk,sans-serif">
+        <rect x="70" y="10" width="100" height="32" rx="8" fill="#261e0a" stroke="#fbbf24" stroke-width="1.5"/>
+        <text x="120" y="31" text-anchor="middle" fill="#fbbf24" font-size="12">🎵 MP3</text>
+        <line x1="120" y1="42" x2="120" y2="56" stroke="#fbbf24" stroke-width="1.5" marker-end="url(#fli-arr)"/>
+        <rect x="55" y="58" width="130" height="28" rx="7" fill="#1c1c35" stroke="#a78bfa" stroke-width="1.5"/>
+        <text x="120" y="76" text-anchor="middle" fill="#a78bfa" font-size="11">① Transcribir</text>
+        <line x1="120" y1="86" x2="120" y2="100" stroke="#6b6b8f" stroke-width="1.5" marker-end="url(#fli-arr2)"/>
+        <rect x="55" y="102" width="130" height="28" rx="7" fill="#1c1c35" stroke="#a78bfa" stroke-width="1.5"/>
+        <text x="120" y="120" text-anchor="middle" fill="#a78bfa" font-size="11">② Analizar</text>
+        <line x1="120" y1="130" x2="120" y2="144" stroke="#6b6b8f" stroke-width="1.5" marker-end="url(#fli-arr2)"/>
+        <rect x="55" y="146" width="130" height="28" rx="7" fill="#1c1c35" stroke="#a78bfa" stroke-width="1.5"/>
+        <text x="120" y="164" text-anchor="middle" fill="#a78bfa" font-size="11">③–⑦ Guardar</text>
+        <line x1="120" y1="174" x2="120" y2="188" stroke="#6b6b8f" stroke-width="1.5" marker-end="url(#fli-arr2)"/>
+        <rect x="55" y="190" width="130" height="28" rx="7" fill="#1c1c35" stroke="#34d399" stroke-width="1.5"/>
+        <text x="120" y="208" text-anchor="middle" fill="#34d399" font-size="11">⑧ Archivar MP3</text>
+        <line x1="120" y1="218" x2="120" y2="232" stroke="#34d399" stroke-width="1.5" marker-end="url(#fli-arrg)"/>
+        <rect x="70" y="234" width="100" height="32" rx="8" fill="#0a2010" stroke="#34d399" stroke-width="1.5"/>
+        <text x="120" y="255" text-anchor="middle" fill="#34d399" font-size="12">✅ Listo</text>
+        <!-- Error branch -->
+        <line x1="180" y1="120" x2="210" y2="120" stroke="#f87171" stroke-width="1.5" stroke-dasharray="3,2"/>
+        <line x1="210" y1="120" x2="210" y2="270" stroke="#f87171" stroke-width="1.5" stroke-dasharray="3,2"/>
+        <text x="215" y="200" fill="#f87171" font-size="10">error</text>
+        <text x="215" y="213" fill="#f87171" font-size="10">→ MP3</text>
+        <text x="215" y="226" fill="#f87171" font-size="10">intacto</text>
+        <defs>
+          <marker id="fli-arr" viewBox="0 0 8 8" markerWidth="6" markerHeight="6" refX="6" refY="4" orient="auto"><path d="M0,1 L0,7 L7,4z" fill="#fbbf24"/></marker>
+          <marker id="fli-arr2" viewBox="0 0 8 8" markerWidth="6" markerHeight="6" refX="6" refY="4" orient="auto"><path d="M0,1 L0,7 L7,4z" fill="#6b6b8f"/></marker>
+          <marker id="fli-arrg" viewBox="0 0 8 8" markerWidth="6" markerHeight="6" refX="6" refY="4" orient="auto"><path d="M0,1 L0,7 L7,4z" fill="#34d399"/></marker>
+        </defs>
+      </svg>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════
+     SLIDE 8 — TÉCNICO: AnalysisResult
+════════════════════════════════════════════════ -->
+<div class="slide" id="s8">
+  <div class="slide-badge badge-tech">Técnico</div>
+  <h1 class="slide-title">AnalysisResult</h1>
+  <p class="slide-sub">El objeto central que conecta todos los agentes — Blackboard Pattern.</p>
+  <div class="slide-inner">
+    <div class="two-col">
+      <div>
+        <pre><code class="language-python">@dataclass
+class AnalysisResult:
+    category: str        # "Idea","Reunión","Tarea"...
+    title: str           # título limpio del archivo
+    summary: str
+    ideas: List[str]
+    tasks: List[str]
+    reminders: List[str]
+    related_project: str
+    tags: List[str]      # mínimo 2
+    # Campos de Reunión:
+    participants: List[str]
+    decisions: List[str]
+    actions_for_me: List[str]
+    actions_for_others: List[str]
+    risks_blockers: List[str]
+    next_steps: List[str]</code></pre>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <div class="card">
+          <h3>🎯 Patrón Blackboard</h3>
+          <p>AnalysisAgent escribe el resultado <strong>una vez</strong>. Los demás agentes (KB, Tasks, Calendar, Drive) lo leen de forma <strong>independiente</strong>. Ningún agente conoce a los otros.</p>
+        </div>
+        <div class="card">
+          <h3>📤 Fan-out a múltiples consumidores</h3>
+          <div style="display:flex;flex-direction:column;gap:4px;margin-top:8px;">
+            <div class="tag">result.tasks → TasksAgent → Google Tasks</div>
+            <div class="tag">result.reminders → CalendarAgent → Google Calendar</div>
+            <div class="tag">result.category → KBAgent → carpeta correcta</div>
+            <div class="tag">result.title → CalendarAgent → título del evento</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════
+     SLIDE 9 — ELI5: AnalysisResult
+════════════════════════════════════════════════ -->
+<div class="slide eli5" id="s9">
+  <div class="slide-badge badge-eli5">💡 Explícalo simple</div>
+  <h1 class="slide-title">AnalysisResult</h1>
+  <p class="slide-sub" style="color:rgba(251,191,36,.6);">Como la ficha que llena el médico</p>
+  <div class="slide-inner">
+    <div class="two-col">
+      <div class="card">
+        <p class="eli5-big">Cuando vas al médico, el doctor te revisa y llena una <span class="eli5-accent-text">ficha médica</span>: nombre, síntomas, diagnóstico, medicamento, próxima cita...</p>
+        <br>
+        <p class="eli5-big">Esa ficha la leen la enfermera, el farmacéutico y el especialista — <span class="eli5-accent-text">cada uno toma lo que necesita</span> sin preguntarle al otro.</p>
+        <br>
+        <p class="eli5-big">El <strong>AnalysisResult</strong> es esa ficha. GPT la llena. Luego, Google Tasks toma las tareas, Google Calendar toma las citas, y la Knowledge Base guarda todo lo demás.</p>
+      </div>
+      <svg viewBox="0 0 260 300" style="width:100%;max-height:280px;" xmlns="http://www.w3.org/2000/svg" font-family="Space Grotesk,sans-serif">
+        <rect x="60" y="10" width="140" height="80" rx="10" fill="#261e0a" stroke="#fbbf24" stroke-width="2"/>
+        <text x="130" y="35" text-anchor="middle" fill="#fbbf24" font-size="13" font-weight="700">📋 AnalysisResult</text>
+        <text x="130" y="53" text-anchor="middle" fill="#9090c0" font-size="10">category: "Reunión"</text>
+        <text x="130" y="67" text-anchor="middle" fill="#9090c0" font-size="10">tasks: ["Enviar resumen"]</text>
+        <text x="130" y="81" text-anchor="middle" fill="#9090c0" font-size="10">reminders: ["Llamar lunes 3pm"]</text>
+        <!-- Fan out lines -->
+        <line x1="90" y1="90" x2="50" y2="150" stroke="#34d399" stroke-width="1.5" marker-end="url(#md-arrg)"/>
+        <line x1="130" y1="90" x2="130" y2="150" stroke="#60a5fa" stroke-width="1.5" marker-end="url(#md-arrb)"/>
+        <line x1="170" y1="90" x2="210" y2="150" stroke="#f472b6" stroke-width="1.5" marker-end="url(#md-arrp)"/>
+        <!-- Consumers -->
+        <rect x="10" y="152" width="90" height="36" rx="8" fill="#0a2010" stroke="#34d399" stroke-width="1.5"/>
+        <text x="55" y="175" text-anchor="middle" fill="#34d399" font-size="11">📂 KB Agent</text>
+        <rect x="85" y="152" width="90" height="36" rx="8" fill="#0f1520" stroke="#60a5fa" stroke-width="1.5"/>
+        <text x="130" y="175" text-anchor="middle" fill="#60a5fa" font-size="11">✅ Tasks Agent</text>
+        <rect x="160" y="152" width="90" height="36" rx="8" fill="#1a0510" stroke="#f472b6" stroke-width="1.5"/>
+        <text x="205" y="175" text-anchor="middle" fill="#f472b6" font-size="11">📅 Calendar</text>
+        <!-- Outputs -->
+        <text x="55" y="220" text-anchor="middle" fill="#6b6b8f" font-size="10">ideas.md</text>
+        <text x="130" y="220" text-anchor="middle" fill="#6b6b8f" font-size="10">Google Tasks</text>
+        <text x="205" y="220" text-anchor="middle" fill="#6b6b8f" font-size="10">Google Cal</text>
+        <defs>
+          <marker id="md-arrg" viewBox="0 0 8 8" markerWidth="6" markerHeight="6" refX="6" refY="4" orient="auto"><path d="M0,1 L0,7 L7,4z" fill="#34d399"/></marker>
+          <marker id="md-arrb" viewBox="0 0 8 8" markerWidth="6" markerHeight="6" refX="6" refY="4" orient="auto"><path d="M0,1 L0,7 L7,4z" fill="#60a5fa"/></marker>
+          <marker id="md-arrp" viewBox="0 0 8 8" markerWidth="6" markerHeight="6" refX="6" refY="4" orient="auto"><path d="M0,1 L0,7 L7,4z" fill="#f472b6"/></marker>
+        </defs>
+      </svg>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════
+     SLIDE 10 — TÉCNICO: Knowledge Base
+════════════════════════════════════════════════ -->
+<div class="slide" id="s10">
+  <div class="slide-badge badge-tech">Técnico</div>
+  <h1 class="slide-title">Knowledge Base</h1>
+  <p class="slide-sub">Markdown organizado automáticamente por categoría.</p>
+  <div class="slide-inner">
+    <div class="two-col">
+      <div>
+        <div class="card" style="margin-bottom:12px;">
+          <h3>ACCUMULATIVE — un archivo por categoría</h3>
+          <div style="font-family:monospace;font-size:12px;color:var(--muted);margin-top:8px;line-height:1.8;">
+            Ideas/ → ideas.md<br>
+            Tasks/ → tasks.md<br>
+            Reminders/ → reminders.md<br>
+            Projects/ → projects.md
+          </div>
+          <p style="margin-top:8px;font-size:12px;">Cada entrada nueva se <em>append</em> al final, separada por <code style="font-family:monospace;color:var(--accent2)">---</code></p>
+        </div>
+        <div class="card">
+          <h3>INDIVIDUAL — un archivo por entrada</h3>
+          <div style="font-family:monospace;font-size:12px;color:var(--muted);margin-top:8px;line-height:1.8;">
+            Meetings/ → 2026-05-15_reunion_boya.md<br>
+            General_Notes/ → 2026-05-15_nota.md
+          </div>
+          <p style="margin-top:8px;font-size:12px;">Las Reuniones tienen secciones ricas: Participantes, Decisiones, Acciones, Riesgos, Próximos pasos.</p>
+        </div>
+      </div>
+      <div>
+        <div class="card">
+          <h3>🔀 Secondary routing</h3>
+          <p>Si el audio es una <strong>Reunión</strong> y menciona tareas, ideas o recordatorios, esos elementos también van a sus archivos acumulativos.</p>
+          <pre style="margin-top:10px;"><code class="language-python"># En KnowledgeBaseAgent
+if result.category not in ACCUMULATIVE:
+    # Es Reunión o Nota general
+    self._route_secondary(result)
+    # tasks[] → tasks.md
+    # ideas[] → ideas.md
+    # reminders[] → reminders.md</code></pre>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════
+     SLIDE 11 — ELI5: Knowledge Base
+════════════════════════════════════════════════ -->
+<div class="slide eli5" id="s11">
+  <div class="slide-badge badge-eli5">💡 Explícalo simple</div>
+  <h1 class="slide-title">Knowledge Base</h1>
+  <p class="slide-sub" style="color:rgba(251,191,36,.6);">Como un archivero con cajones ordenados</p>
+  <div class="slide-inner">
+    <div class="two-col">
+      <div class="card">
+        <p class="eli5-big">Imagina un <span class="eli5-accent-text">archivero con cajones</span>. El cajón de "Ideas", el de "Tareas", el de "Reuniones"...</p>
+        <br>
+        <p class="eli5-big">Cuando dices algo, el sistema <span class="eli5-accent-text">abre el cajón correcto</span> y guarda una ficha organizada. Nunca mezcla las ideas con las tareas.</p>
+        <br>
+        <p class="eli5-big">Y si en una reunión mencionas una tarea pendiente, esa tarea va <span class="eli5-accent-text">al cajón de tareas también</span> — para que no se pierda.</p>
+      </div>
+      <svg viewBox="0 0 240 280" style="width:100%;max-height:270px;" xmlns="http://www.w3.org/2000/svg" font-family="Space Grotesk,sans-serif">
+        <rect x="40" y="20" width="160" height="240" rx="12" fill="#261e0a" stroke="#fbbf24" stroke-width="2"/>
+        <rect x="52" y="38" width="136" height="36" rx="6" fill="#1a1000" stroke="#fbbf24" stroke-width="1"/>
+        <text x="120" y="61" text-anchor="middle" fill="#fbbf24" font-size="12" font-weight="600">💡 Ideas</text>
+        <rect x="52" y="82" width="136" height="36" rx="6" fill="#1a1000" stroke="#fbbf24" stroke-width="1"/>
+        <text x="120" y="105" text-anchor="middle" fill="#fbbf24" font-size="12" font-weight="600">✅ Tareas</text>
+        <rect x="52" y="126" width="136" height="36" rx="6" fill="#1a1000" stroke="#fbbf24" stroke-width="1"/>
+        <text x="120" y="149" text-anchor="middle" fill="#fbbf24" font-size="12" font-weight="600">📅 Recordatorios</text>
+        <rect x="52" y="170" width="136" height="36" rx="6" fill="#1a1000" stroke="#fbbf24" stroke-width="1"/>
+        <text x="120" y="193" text-anchor="middle" fill="#fbbf24" font-size="12" font-weight="600">🤝 Reuniones</text>
+        <rect x="52" y="214" width="136" height="36" rx="6" fill="#1a1000" stroke="#fbbf24" stroke-width="1"/>
+        <text x="120" y="237" text-anchor="middle" fill="#fbbf24" font-size="12" font-weight="600">📁 Proyectos</text>
+        <!-- Handle lines -->
+        <line x1="168" y1="56" x2="185" y2="56" stroke="#fbbf24" stroke-width="2"/>
+        <line x1="168" y1="100" x2="185" y2="100" stroke="#fbbf24" stroke-width="2"/>
+        <line x1="168" y1="144" x2="185" y2="144" stroke="#fbbf24" stroke-width="2"/>
+        <line x1="168" y1="188" x2="185" y2="188" stroke="#fbbf24" stroke-width="2"/>
+        <line x1="168" y1="232" x2="185" y2="232" stroke="#fbbf24" stroke-width="2"/>
+      </svg>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════
+     SLIDE 12 — TÉCNICO: RAG + ChromaDB
+════════════════════════════════════════════════ -->
+<div class="slide" id="s12">
+  <div class="slide-badge badge-tech">Técnico</div>
+  <h1 class="slide-title">RAG + ChromaDB</h1>
+  <p class="slide-sub">Búsqueda semántica sobre la Knowledge Base.</p>
+  <div class="slide-inner">
+    <div class="two-col">
+      <div style="display:flex;flex-direction:column;gap:12px;">
+        <div class="card">
+          <h3>¿Qué es RAG?</h3>
+          <p><strong>R</strong>etrieval <strong>A</strong>ugmented <strong>G</strong>eneration. El LLM responde usando fragmentos recuperados de la KB, no de su memoria. Esto evita alucinaciones.</p>
+        </div>
+        <div class="card">
+          <h3>Flujo QUERY</h3>
+          <p>1. Embed la pregunta del usuario<br>2. Buscar los 5 chunks más similares en ChromaDB<br>3. Si distancia &gt; threshold → "No tengo esa info"<br>4. Pasar chunks + historial → GPT-4o-mini → respuesta</p>
+        </div>
+        <div class="card">
+          <h3>Flujo CAPTURE</h3>
+          <p>GPT-4o-mini clasifica la intención. Si es CAPTURE → guarda en KB → re-indexa ChromaDB (< 2 seg). El nuevo contenido es consultable de inmediato.</p>
+        </div>
+      </div>
+      <div>
+        <pre><code class="language-python">def query(self, message, history):
+    # 1. Embed la pregunta
+    emb = self._embed([message])[0]
+
+    # 2. Buscar en ChromaDB
+    results = col.query(
+        query_embeddings=[emb], n_results=5
+    )
+
+    # 3. Filtrar por relevancia
+    relevant = [d for d,dist in zip(docs,dists)
+                if dist < THRESHOLD]
+
+    if not relevant:
+        return "No tengo esa información."
+
+    # 4. Generar respuesta con contexto
+    return self._generate(message, relevant, history)</code></pre>
+        <div class="card" style="margin-top:12px;">
+          <h3>Chunking strategy</h3>
+          <p>Acumulativos: split por <code style="font-family:monospace;color:var(--accent2)">---</code> (una entrada = un chunk)<br>Individuales: un archivo = un chunk</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════
+     SLIDE 13 — ELI5: RAG + ChromaDB
+════════════════════════════════════════════════ -->
+<div class="slide eli5" id="s13">
+  <div class="slide-badge badge-eli5">💡 Explícalo simple</div>
+  <h1 class="slide-title">RAG + ChromaDB</h1>
+  <p class="slide-sub" style="color:rgba(251,191,36,.6);">Una biblioteca mágica que entiende lo que quieres decir</p>
+  <div class="slide-inner">
+    <div class="two-col">
+      <div class="card">
+        <p class="eli5-big">En una biblioteca normal buscas por la <span class="eli5-accent-text">palabra exacta</span>. Si buscas "automóvil" no encuentra "coche".</p>
+        <br>
+        <p class="eli5-big">La biblioteca mágica (<strong>ChromaDB</strong>) entiende el <span class="eli5-accent-text">significado</span>. Busca "coche" y encuentra "automóvil", "vehículo" y "transporte".</p>
+        <br>
+        <p class="eli5-big">Cuando preguntas "¿qué reuniones tuve sobre presupuesto?", el sistema encuentra todas las notas relacionadas aunque no uses esa palabra exacta.</p>
+        <br>
+        <p class="eli5-big">Y si <span class="eli5-accent-text">no encuentra nada</span> relevante, dice "no sé" en vez de inventar una respuesta.</p>
+      </div>
+      <svg viewBox="0 0 240 260" style="width:100%;max-height:250px;" xmlns="http://www.w3.org/2000/svg" font-family="Space Grotesk,sans-serif">
+        <rect x="60" y="10" width="120" height="40" rx="10" fill="#261e0a" stroke="#fbbf24" stroke-width="2"/>
+        <text x="120" y="35" text-anchor="middle" fill="#fbbf24" font-size="13">🤔 "¿presupuesto?"</text>
+        <line x1="120" y1="50" x2="120" y2="74" stroke="#fbbf24" stroke-width="2" marker-end="url(#rag-arr)"/>
+        <ellipse cx="120" cy="100" rx="80" ry="40" fill="#0a1520" stroke="#60a5fa" stroke-width="1.5"/>
+        <text x="120" y="95" text-anchor="middle" fill="#60a5fa" font-size="11" font-weight="600">ChromaDB</text>
+        <text x="120" y="110" text-anchor="middle" fill="#6b6b8f" font-size="9">vectores + significado</text>
+        <line x1="80" y1="138" x2="60" y2="170" stroke="#34d399" stroke-width="1.5" marker-end="url(#rag-arrg)"/>
+        <line x1="120" y1="140" x2="120" y2="170" stroke="#34d399" stroke-width="1.5" marker-end="url(#rag-arrg)"/>
+        <line x1="160" y1="138" x2="180" y2="170" stroke="#34d399" stroke-width="1.5" marker-end="url(#rag-arrg)"/>
+        <rect x="15" y="172" width="70" height="28" rx="6" fill="#0a2010" stroke="#34d399" stroke-width="1"/>
+        <text x="50" y="190" text-anchor="middle" fill="#34d399" font-size="9">reunión BOYA</text>
+        <rect x="85" y="172" width="70" height="28" rx="6" fill="#0a2010" stroke="#34d399" stroke-width="1"/>
+        <text x="120" y="190" text-anchor="middle" fill="#34d399" font-size="9">nota presupuesto</text>
+        <rect x="155" y="172" width="70" height="28" rx="6" fill="#0a2010" stroke="#34d399" stroke-width="1"/>
+        <text x="190" y="190" text-anchor="middle" fill="#34d399" font-size="9">tarea financiera</text>
+        <line x1="120" y1="200" x2="120" y2="224" stroke="#a78bfa" stroke-width="2" marker-end="url(#rag-arrv)"/>
+        <rect x="60" y="226" width="120" height="30" rx="8" fill="#1c1c35" stroke="#a78bfa" stroke-width="1.5"/>
+        <text x="120" y="246" text-anchor="middle" fill="#a78bfa" font-size="11">💬 Respuesta</text>
+        <defs>
+          <marker id="rag-arr" viewBox="0 0 8 8" markerWidth="6" markerHeight="6" refX="6" refY="4" orient="auto"><path d="M0,1 L0,7 L7,4z" fill="#fbbf24"/></marker>
+          <marker id="rag-arrg" viewBox="0 0 8 8" markerWidth="6" markerHeight="6" refX="6" refY="4" orient="auto"><path d="M0,1 L0,7 L7,4z" fill="#34d399"/></marker>
+          <marker id="rag-arrv" viewBox="0 0 8 8" markerWidth="6" markerHeight="6" refX="6" refY="4" orient="auto"><path d="M0,1 L0,7 L7,4z" fill="#a78bfa"/></marker>
+        </defs>
+      </svg>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════
+     SLIDE 14 — TÉCNICO: MessageHandler
+════════════════════════════════════════════════ -->
+<div class="slide" id="s14">
+  <div class="slide-badge badge-tech">Técnico</div>
+  <h1 class="slide-title">MessageHandler</h1>
+  <p class="slide-sub">Núcleo canal-agnóstico: la misma lógica sirve a todos los canales.</p>
+  <div class="slide-inner">
+    <div class="two-col">
+      <div>
+        <pre><code class="language-python"># Cualquier canal hace solo esto:
+handler = build_message_handler(api_key)
+response = handler.process_message(texto)
+
+# CLI (chat.py)
+response = handler.process_message(input("Tu: "))
+print(response)
+
+# Telegram (telegram_bot.py)
+response = handler.process_message(update.message.text)
+await update.message.reply_text(response)
+
+# Futura API web
+@app.post("/chat")
+def chat(msg: str):
+    return handler.process_message(msg)</code></pre>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <div class="card">
+          <h3>process_message() flow</h3>
+          <p>1. classify_intent(GPT) → QUERY o CAPTURE<br>2. QUERY → QueryAgent.chat() → RAG<br>3. CAPTURE → AnalysisAgent → KB + Tasks + Calendar + re-index</p>
+        </div>
+        <div class="card">
+          <h3>process_voice(file_path) flow</h3>
+          <p>1. TranscriptionAgent.run(path) → transcript<br>2. Siempre CAPTURE (no classify)<br>3. Mismo pipeline que process_message CAPTURE</p>
+        </div>
+        <div class="card">
+          <h3>agent_factory.py</h3>
+          <p>build_message_handler() crea e inyecta todos los agentes. Google integrations se habilitan automáticamente si existen las credenciales.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════
+     SLIDE 15 — ELI5: MessageHandler
+════════════════════════════════════════════════ -->
+<div class="slide eli5" id="s15">
+  <div class="slide-badge badge-eli5">💡 Explícalo simple</div>
+  <h1 class="slide-title">MessageHandler</h1>
+  <p class="slide-sub" style="color:rgba(251,191,36,.6);">Como la recepción de un hotel</p>
+  <div class="slide-inner">
+    <div class="two-col">
+      <div class="card">
+        <p class="eli5-big">La recepción de un hotel atiende a <span class="eli5-accent-text">todo tipo de huésped</span>: los que llegan a pie, los que llegan en coche, los que llegan en avión...</p>
+        <br>
+        <p class="eli5-big">Pero una vez adentro, el proceso es el <span class="eli5-accent-text">mismo para todos</span>: check-in, llave, habitación.</p>
+        <br>
+        <p class="eli5-big">El <strong>MessageHandler</strong> es esa recepción. Da igual si el mensaje viene de la terminal, de Telegram o de una app web — la lógica de clasificar, guardar y responder es <span class="eli5-accent-text">exactamente la misma</span>.</p>
+      </div>
+      <svg viewBox="0 0 260 240" style="width:100%;max-height:230px;" xmlns="http://www.w3.org/2000/svg" font-family="Space Grotesk,sans-serif">
+        <rect x="0" y="20" width="72" height="30" rx="7" fill="#261e0a" stroke="#fbbf24" stroke-width="1.5"/>
+        <text x="36" y="40" text-anchor="middle" fill="#fbbf24" font-size="11">💻 Terminal</text>
+        <rect x="0" y="62" width="72" height="30" rx="7" fill="#261e0a" stroke="#fbbf24" stroke-width="1.5"/>
+        <text x="36" y="82" text-anchor="middle" fill="#fbbf24" font-size="11">✈️ Telegram</text>
+        <rect x="0" y="104" width="72" height="30" rx="7" fill="#261e0a" stroke="#fbbf24" stroke-width="1.5"/>
+        <text x="36" y="124" text-anchor="middle" fill="#fbbf24" font-size="11">🌐 App Web</text>
+        <line x1="72" y1="35" x2="105" y2="85" stroke="#fbbf24" stroke-width="1.5" marker-end="url(#mh-arr)"/>
+        <line x1="72" y1="77" x2="105" y2="85" stroke="#fbbf24" stroke-width="1.5" marker-end="url(#mh-arr)"/>
+        <line x1="72" y1="119" x2="105" y2="95" stroke="#fbbf24" stroke-width="1.5" marker-end="url(#mh-arr)"/>
+        <rect x="107" y="60" width="110" height="60" rx="10" fill="#2a1f5e" stroke="#a78bfa" stroke-width="2"/>
+        <text x="162" y="84" text-anchor="middle" fill="#a78bfa" font-size="12" font-weight="700">Message</text>
+        <text x="162" y="100" text-anchor="middle" fill="#a78bfa" font-size="12" font-weight="700">Handler</text>
+        <text x="162" y="114" text-anchor="middle" fill="#6b6b8f" font-size="9">process_message()</text>
+        <line x1="217" y1="90" x2="248" y2="60" stroke="#34d399" stroke-width="1.5" marker-end="url(#mh-arrg)"/>
+        <line x1="217" y1="90" x2="248" y2="90" stroke="#34d399" stroke-width="1.5" marker-end="url(#mh-arrg)"/>
+        <line x1="217" y1="90" x2="248" y2="120" stroke="#34d399" stroke-width="1.5" marker-end="url(#mh-arrg)"/>
+        <text x="254" y="64" fill="#34d399" font-size="10">KB</text>
+        <text x="254" y="94" fill="#34d399" font-size="10">Tasks</text>
+        <text x="254" y="124" fill="#34d399" font-size="10">RAG</text>
+        <defs>
+          <marker id="mh-arr" viewBox="0 0 8 8" markerWidth="6" markerHeight="6" refX="6" refY="4" orient="auto"><path d="M0,1 L0,7 L7,4z" fill="#fbbf24"/></marker>
+          <marker id="mh-arrg" viewBox="0 0 8 8" markerWidth="6" markerHeight="6" refX="6" refY="4" orient="auto"><path d="M0,1 L0,7 L7,4z" fill="#34d399"/></marker>
+        </defs>
+      </svg>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════
+     SLIDE 16 — TÉCNICO: Telegram Bot
+════════════════════════════════════════════════ -->
+<div class="slide" id="s16">
+  <div class="slide-badge badge-tech">Técnico</div>
+  <h1 class="slide-title">Telegram Bot</h1>
+  <p class="slide-sub">Polling mode. Voz + texto. Whitelist de seguridad.</p>
+  <div class="slide-inner">
+    <div class="two-col">
+      <div>
+        <pre><code class="language-python">async def voice_handler(update, context):
+    if not is_authorized(update):
+        await update.message.reply_text("No autorizado.")
+        return
+    # Descargar audio .ogg de Telegram
+    tg_file = await bot.get_file(file_id)
+    await tg_file.download_to_drive(temp_path)
+    # Transcribir (Whisper acepta .ogg)
+    response = handler.process_voice(temp_path)
+    await update.message.reply_text(response)
+
+# Security: whitelist por user ID
+ALLOWED_USER_ID = int(os.getenv("TELEGRAM_ALLOWED_USER_ID"))
+def is_authorized(update):
+    return update.effective_user.id == ALLOWED_USER_ID</code></pre>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <div class="card">
+          <h3>🔄 Polling vs Webhook</h3>
+          <p><strong>Polling:</strong> el bot pregunta periódicamente si hay mensajes nuevos. No necesita URL pública. Ideal para desarrollo local.</p>
+          <p style="margin-top:6px;"><strong>Webhook (futuro):</strong> Telegram empuja los mensajes al servidor. Requiere URL pública (Cloud Run, paso 17).</p>
+        </div>
+        <div class="card">
+          <h3>📋 Comandos disponibles</h3>
+          <div class="tag">/start — bienvenida</div>
+          <div class="tag">/reset — nueva conversación</div>
+          <div class="tag">texto — QUERY o CAPTURE</div>
+          <div class="tag">🎙️ voz — siempre CAPTURE</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════
+     SLIDE 17 — ELI5: Telegram Bot
+════════════════════════════════════════════════ -->
+<div class="slide eli5" id="s17">
+  <div class="slide-badge badge-eli5">💡 Explícalo simple</div>
+  <h1 class="slide-title">Telegram Bot</h1>
+  <p class="slide-sub" style="color:rgba(251,191,36,.6);">Tu asistente personal siempre en el bolsillo</p>
+  <div class="slide-inner">
+    <div class="two-col">
+      <div class="card">
+        <p class="eli5-big">¿Alguna vez quisiste <span class="eli5-accent-text">guardar una idea</span> mientras estás manejando? Solo mandas un audio de voz a Telegram y listo.</p>
+        <br>
+        <p class="eli5-big">¿Quieres saber qué tienes pendiente del proyecto BOYA? Solo <span class="eli5-accent-text">pregunta en el chat</span> como si le hablaras a un amigo.</p>
+        <br>
+        <p class="eli5-big">El bot <span class="eli5-accent-text">solo te reconoce a ti</span> — si alguien más le escribe, no responde. Es solo tuyo.</p>
+      </div>
+      <svg viewBox="0 0 220 280" style="width:100%;max-height:270px;" xmlns="http://www.w3.org/2000/svg" font-family="Space Grotesk,sans-serif">
+        <!-- Phone -->
+        <rect x="60" y="10" width="100" height="180" rx="16" fill="#261e0a" stroke="#fbbf24" stroke-width="2"/>
+        <rect x="68" y="28" width="84" height="140" rx="8" fill="#1c1400"/>
+        <!-- Chat bubbles -->
+        <rect x="72" y="38" width="70" height="24" rx="8" fill="#fbbf24"/>
+        <text x="107" y="54" text-anchor="middle" fill="#1c1400" font-size="9" font-weight="600">🎙️ [nota de voz]</text>
+        <rect x="90" y="72" width="58" height="24" rx="8" fill="#1a1f40"/>
+        <text x="119" y="88" text-anchor="middle" fill="#a78bfa" font-size="8">[Guardado] Idea</text>
+        <rect x="72" y="106" width="65" height="24" rx="8" fill="#fbbf24"/>
+        <text x="104" y="122" text-anchor="middle" fill="#1c1400" font-size="8" font-weight="600">¿ideas del proyecto?</text>
+        <rect x="82" y="140" width="68" height="24" rx="8" fill="#1a1f40"/>
+        <text x="116" y="156" text-anchor="middle" fill="#a78bfa" font-size="8">Encontré 3 ideas...</text>
+        <!-- Home button -->
+        <circle cx="110" cy="200" r="8" fill="#261e0a" stroke="#fbbf24" stroke-width="1.5"/>
+      </svg>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════
+     SLIDE 18 — FLUJO COMPLETO
+════════════════════════════════════════════════ -->
+<div class="slide" id="s18">
+  <div class="slide-badge badge-gen">Flujo completo</div>
+  <h1 class="slide-title">De la nota de voz al conocimiento organizado</h1>
+  <p class="slide-sub">Cada paso, en orden.</p>
+  <div class="slide-inner">
+    <div class="flow-steps">
+      <div class="flow-step">
+        <div class="step-num">1</div>
+        <div class="step-content"><strong>Usuario graba nota de voz en Telegram</strong><span>"Tuve una reunión con el equipo BOYA, decidimos lanzar en junio, Oscar debe enviar el brief mañana"</span></div>
+      </div>
+      <div class="flow-step">
+        <div class="step-num">2</div>
+        <div class="step-content"><strong>telegram_bot.py descarga el .ogg y llama process_voice()</strong><span>MessageHandler → TranscriptionAgent → Whisper-1 API → transcript de texto</span></div>
+      </div>
+      <div class="flow-step">
+        <div class="step-num">3</div>
+        <div class="step-content"><strong>AnalysisAgent → GPT-4o-mini clasifica</strong><span>category: "Reunión" | title: "Reunión equipo BOYA — lanzamiento junio" | tasks: ["Enviar brief"] | decisions: ["Lanzar en junio"]</span></div>
+      </div>
+      <div class="flow-step">
+        <div class="step-num">4</div>
+        <div class="step-content"><strong>KnowledgeBaseAgent → Meetings/2026-05-18_reunion_boya.md</strong><span>Archivo individual con secciones: Participantes, Decisiones, Acciones para mí, Próximos pasos</span></div>
+      </div>
+      <div class="flow-step">
+        <div class="step-num">5</div>
+        <div class="step-content"><strong>Secondary routing → tasks.md también recibe la tarea</strong><span>"Enviar brief" aparece en Tasks/tasks.md Y en Google Tasks con due date mañana</span></div>
+      </div>
+      <div class="flow-step">
+        <div class="step-num">6</div>
+        <div class="step-content"><strong>ChromaDB re-indexado → nota consultable de inmediato</strong><span>Pregunta: "¿qué se decidió en la reunión de BOYA?" → respuesta semántica correcta</span></div>
+      </div>
+      <div class="flow-step">
+        <div class="step-num">7</div>
+        <div class="step-content"><strong>Telegram responde al usuario</strong><span>[Guardado] Reunión — "Reunión equipo BOYA" | Tasks: 1 tarea enviada a Google Tasks</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════
+     SLIDE 19 — DECISIONES DE DISEÑO
+════════════════════════════════════════════════ -->
+<div class="slide" id="s19">
+  <div class="slide-badge badge-gen">Decisiones</div>
+  <h1 class="slide-title">¿Por qué estas tecnologías?</h1>
+  <p class="slide-sub">Cada elección tiene una razón documentada.</p>
+  <div class="slide-inner">
+    <div class="dec-table">
+      <div class="dec-row" style="background:var(--card2);font-weight:600;font-size:12px;color:var(--muted);">
+        <span>Tecnología</span><span>Alternativa descartada</span><span>Razón</span>
+      </div>
+      <div class="dec-row"><span>gpt-4o-mini</span><span>gpt-4o</span><span>16× más barato, calidad suficiente para clasificación</span></div>
+      <div class="dec-row"><span>ChromaDB local</span><span>Pinecone (cloud)</span><span>Gratuito, sin infraestructura externa, persistente en disco</span></div>
+      <div class="dec-row"><span>Telegram polling</span><span>Webhook</span><span>No requiere URL pública para desarrollo local</span></div>
+      <div class="dec-row"><span>Markdown + Obsidian</span><span>Notion / DB</span><span>Legible sin herramientas, versionable con git</span></div>
+      <div class="dec-row"><span>LangGraph lineal</span><span>Grafo condicional</span><span>Más fácil de mantener; condicionalidad en los nodos, no en el grafo</span></div>
+      <div class="dec-row"><span>Abstract base classes</span><span>Acoplamiento directo</span><span>Proveedores intercambiables sin reescribir el pipeline</span></div>
+      <div class="dec-row"><span>Google APIs opcionales</span><span>Requeridas</span><span>El sistema funciona en cualquier entorno sin configuración</span></div>
+      <div class="dec-row"><span>Re-index en cada CAPTURE</span><span>Indexado incremental</span><span>Siempre fresco, < 2s con el volumen actual, sin complejidad extra</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════
+     SLIDE 20 — RESULTADOS
+════════════════════════════════════════════════ -->
+<div class="slide" id="s20">
+  <div class="slide-badge badge-gen">Resultados</div>
+  <h1 class="slide-title">¿Qué se construyó?</h1>
+  <p class="slide-sub">20 pasos. Un sistema completo de segundo cerebro personal.</p>
+  <div class="slide-inner">
+    <div class="stats-grid" style="margin-bottom:20px;">
+      <div class="stat-card"><span class="stat-num">20</span><span class="stat-label">Pasos completados</span></div>
+      <div class="stat-card"><span class="stat-num">9</span><span class="stat-label">Agentes especializados</span></div>
+      <div class="stat-card"><span class="stat-num">3</span><span class="stat-label">Formas de interactuar</span></div>
+      <div class="stat-card"><span class="stat-num">6</span><span class="stat-label">Categorías de contenido</span></div>
+      <div class="stat-card"><span class="stat-num">30</span><span class="stat-label">Decisiones técnicas documentadas</span></div>
+      <div class="stat-card"><span class="stat-num">∞</span><span class="stat-label">Ideas capturadas desde el teléfono</span></div>
+    </div>
+    <div class="two-col">
+      <div class="card">
+        <h3>El sistema puede</h3>
+        <ul style="padding-left:16px;margin-top:8px;display:flex;flex-direction:column;gap:4px;">
+          <li style="font-size:13px;color:var(--muted);">Procesar audios MP3 sin supervisión</li>
+          <li style="font-size:13px;color:var(--muted);">Capturar ideas desde Telegram mientras manejas</li>
+          <li style="font-size:13px;color:var(--muted);">Responder "¿qué decidí en la reunión de BOYA?"</li>
+          <li style="font-size:13px;color:var(--muted);">Crear tareas en Google Tasks automáticamente</li>
+          <li style="font-size:13px;color:var(--muted);">Agendar eventos en Google Calendar</li>
+          <li style="font-size:13px;color:var(--muted);">Sincronizar todo a Google Drive</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>Arquitectura lista para crecer</h3>
+        <ul style="padding-left:16px;margin-top:8px;display:flex;flex-direction:column;gap:4px;">
+          <li style="font-size:13px;color:var(--muted);">Agregar un nuevo canal = adaptador delgado que llama process_message()</li>
+          <li style="font-size:13px;color:var(--muted);">Cambiar de OpenAI a modelo local = nueva implementación de la interfaz</li>
+          <li style="font-size:13px;color:var(--muted);">Grafo LangGraph listo para paralelización</li>
+          <li style="font-size:13px;color:var(--muted);">core/ reutilizable por futura app web</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════
+     SLIDE 21 — CONCLUSIONES
+════════════════════════════════════════════════ -->
+<div class="slide" id="s21">
+  <div class="slide-badge badge-gen">Conclusiones</div>
+  <h1 class="slide-title">Aprendizajes y lo que sigue</h1>
+  <p class="slide-sub">Un proyecto que creció de MVP a sistema completo, paso a paso.</p>
+  <div class="slide-inner">
+    <div class="two-col">
+      <div style="display:flex;flex-direction:column;gap:12px;">
+        <div class="card">
+          <h3>🎯 Lo que funcionó</h3>
+          <ul style="padding-left:16px;margin-top:6px;display:flex;flex-direction:column;gap:4px;">
+            <li style="font-size:13px;color:var(--muted);">Construir paso a paso validando cada fase antes de agregar complejidad</li>
+            <li style="font-size:13px;color:var(--muted);">Documentar decisiones en tiempo real (30 ADRs)</li>
+            <li style="font-size:13px;color:var(--muted);">Interfaces abstractas desde el inicio — no hubo refactors dolorosos</li>
+            <li style="font-size:13px;color:var(--muted);">Markdown como formato universal — funciona en Obsidian, git, y RAG</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>🔮 Lo que sigue — Paso 21</h3>
+          <p style="font-size:13px;color:var(--muted);margin-top:6px;">Una <strong style="color:var(--accent2)">app propia</strong> con dashboard visual: lista de ideas, tareas pendientes, resúmenes de reuniones, calendario integrado y chat IA embebido. Backend FastAPI reutilizando <code style="font-family:monospace;font-size:11px;">core/</code>. Proyecto separado.</p>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:12px;">
+        <div class="card">
+          <h3>🧠 Patrones aprendidos</h3>
+          <div class="tag">Blackboard Pattern</div>
+          <div class="tag">Abstract Base Classes</div>
+          <div class="tag">Factory Pattern</div>
+          <div class="tag">Canal-agnostic core</div>
+          <div class="tag">RAG con umbral de confianza</div>
+          <div class="tag">StateGraph lineal</div>
+          <div class="tag">Secondary routing</div>
+          <div class="tag">Deduplicación por hash SHA256</div>
+        </div>
+        <div class="card" style="text-align:center;">
+          <div style="font-size:48px;margin-bottom:8px;">🚀</div>
+          <p style="font-size:15px;font-weight:600;color:var(--accent2);">El sistema está vivo</p>
+          <p style="font-size:13px;color:var(--muted);margin-top:4px;">python telegram_bot.py</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div><!-- /deck -->
+
+<!-- NAVIGATION -->
+<div id="nav">
+  <button id="btn-prev" onclick="go(-1)">←</button>
+  <span id="counter">1 / 21</span>
+  <button id="btn-next" onclick="go(1)">→</button>
+</div>
+<div id="progress"><div id="progress-fill"></div></div>
+
+<script>
+const slides = document.querySelectorAll('.slide');
+const total  = slides.length;
+let cur      = 0;
+
+function show(n) {
+  slides[cur].classList.remove('active');
+  slides[cur].classList.add('exit');
+  setTimeout(() => slides[cur].classList.remove('exit'), 350);
+
+  cur = (n + total) % total;
+  slides[cur].classList.add('active');
+  slides[cur].scrollTop = 0;
+
+  document.getElementById('counter').textContent = `${cur + 1} / ${total}`;
+  document.getElementById('progress-fill').style.width = `${((cur + 1) / total) * 100}%`;
+  document.getElementById('btn-prev').disabled = cur === 0;
+  document.getElementById('btn-next').disabled = cur === total - 1;
+}
+
+function go(dir) { show(cur + dir); }
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight' || e.key === ' ') go(1);
+  if (e.key === 'ArrowLeft') go(-1);
+});
+
+// Touch/swipe
+let tx = 0;
+document.addEventListener('touchstart', e => tx = e.touches[0].clientX);
+document.addEventListener('touchend',   e => {
+  const dx = e.changedTouches[0].clientX - tx;
+  if (Math.abs(dx) > 50) go(dx < 0 ? 1 : -1);
+});
+
+// Init
+document.getElementById('btn-prev').disabled = true;
+document.getElementById('progress-fill').style.width = `${(1/total)*100}%`;
+hljs.highlightAll();
+</script>
+</body>
+</html>

@@ -73,6 +73,7 @@ class OrchestratorAgent:
 
     def run(self) -> None:
         if self.drive_agent:
+            self.drive_agent.download_kb()
             print("\n[DriveAgent] Syncing inbox from Google Drive...")
             self.drive_agent.download_inbox()
 
