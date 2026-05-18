@@ -6,7 +6,7 @@ Archivo de contexto para retomar el proyecto en sesiones nuevas.
 
 ## Qué es
 
-Sistema personal de captura y organización del conocimiento. Procesa audios de voz, los transcribe, clasifica el contenido en 6 categorías y lo organiza automáticamente en una Knowledge Base en Markdown. Tiene integraciones con Google Tasks, Calendar y Drive, un agente conversacional con búsqueda semántica (RAG), y un bot de Telegram como interfaz principal.
+Sistema personal de captura y organización del conocimiento. Procesa audios de voz, los transcribe, clasifica el contenido en 6 categorías y lo organiza automáticamente en una Knowledge Base en Markdown. Tiene integraciones con Google Tasks, Calendar y Drive, un agente conversacional con búsqueda semántica (RAG), un bot de Telegram como interfaz principal, y una API HTTP para consumir desde cualquier app.
 
 ---
 
@@ -24,6 +24,8 @@ Sistema personal de captura y organización del conocimiento. Procesa audios de 
 | Google Calendar | google-api-python-client |
 | Google Drive | google-api-python-client |
 | Bot | python-telegram-bot (polling) |
+| API HTTP | FastAPI + uvicorn |
+| Despliegue | Railway.app (2 servicios) |
 
 ---
 
@@ -36,7 +38,7 @@ core/
   agent_factory.py    ← build_message_handler() — inicializa todo
 pipeline/             ← LangGraph (graph.py, nodes.py, state.py)
 services/
-  rag/                ← ChromaDB, indexer, intent_classifier (QUERY/CAPTURE/PIPELINE)
+  rag/                ← ChromaDB, indexer, intent_classifier, action_classifier
   transcription/      ← OpenAI Whisper
   analysis/           ← OpenAI GPT-4o-mini + AnalysisResult dataclass
   tasks/              ← Google Tasks API
@@ -49,6 +51,8 @@ credentials/          ← OAuth tokens Google (gitignored)
 main.py               ← procesa MP3s de input/
 chat.py               ← chat conversacional en terminal
 telegram_bot.py       ← bot de Telegram
+api.py                ← API HTTP (FastAPI)
+Procfile              ← Railway: worker=telegram_bot.py, web=api.py
 ```
 
 ---
@@ -57,22 +61,26 @@ telegram_bot.py       ← bot de Telegram
 
 ```bash
 python main.py           # procesa todos los MP3 de input/
-python chat.py           # chat en terminal (QUERY / CAPTURE / PIPELINE)
+python chat.py           # chat en terminal (QUERY / CAPTURE / PIPELINE / ACTION)
 python telegram_bot.py   # bot de Telegram activo
+python api.py            # API HTTP en localhost:8000
 ```
 
 ---
 
-## Flujo principal
+## Flujo principal — clasificador de dos niveles
 
 ```
-[Audio MP3 o texto o voz Telegram]
+[Audio MP3 o texto o voz Telegram o llamada HTTP]
         ↓
-classify_intent → QUERY | CAPTURE | PIPELINE
+Level 1: classify_intent → QUERY | CAPTURE | PIPELINE | ACTION
         ↓
-QUERY   → ChromaDB similarity search → GPT-4o-mini → respuesta semántica
-CAPTURE → AnalysisAgent → KnowledgeBaseAgent → Tasks/Calendar → re-index
-PIPELINE→ corre main.py → procesa MP3s del inbox → respuesta conversacional con GPT
+QUERY    → ChromaDB similarity search → GPT-4o-mini → respuesta semántica
+CAPTURE  → AnalysisAgent → KnowledgeBaseAgent → Tasks/Calendar → re-index
+PIPELINE → corre main.py → procesa MP3s del inbox → resumen conversacional
+ACTION   → Level 2: classify_action → COMPLETE_TASK | ARCHIVE_EVENTS
+                    COMPLETE_TASK  → lista tareas → GPT elige → complete_task()
+                    ARCHIVE_EVENTS → lista eventos pasados → delete_event()
 ```
 
 ---
@@ -105,6 +113,23 @@ drive_sync → tasks → calendar → archive → drive_processed → END
 
 ---
 
+## API HTTP — endpoints
+
+```
+GET  /health              → {"status": "ok"}
+POST /chat                → {"message": "..."} → {"response": "..."}
+GET  /kb/{category}       → contenido de la KB
+```
+
+Categorías válidas: `ideas | tasks | meetings | reminders | projects | notes`
+
+Acumulativas devuelven `{category, content}`.
+Individuales (meetings, notes) devuelven `{category, files: [{name, content}]}`.
+
+Sin autenticación por ahora — pendiente agregar API Key.
+
+---
+
 ## Variables de entorno (.env)
 
 ```
@@ -121,6 +146,27 @@ GOOGLE_DRIVE_KB_FOLDER_ID=1rtYFbFItvoZrI1V0xN018mLU-3uOoy9r
 GOOGLE_CALENDAR_TIMEZONE=America/Mexico_City
 ```
 
+En Railway se usan además:
+```
+GOOGLE_CREDENTIALS_B64=...       ← credentials.json en base64
+GOOGLE_TOKEN_TASKS_B64=...       ← token.json en base64
+GOOGLE_TOKEN_CALENDAR_B64=...    ← token_calendar.json en base64
+GOOGLE_TOKEN_DRIVE_B64=...       ← token_drive.json en base64
+```
+
+---
+
+## Despliegue — Railway.app
+
+Dos servicios en el mismo proyecto Railway, mismo repo `oskrza-ctrl/agent_testing`:
+
+| Servicio | Start Command | Tipo | Estado |
+|--|--|--|--|
+| `agent_testing` | `python telegram_bot.py` | worker | Online ✅ |
+| `agent-api` | `python api.py` | web | Online ✅ |
+
+El deploy se dispara automáticamente con cada `git push origin main`.
+
 ---
 
 ## Decisiones importantes
@@ -135,39 +181,33 @@ GOOGLE_CALENDAR_TIMEZONE=America/Mexico_City
 | Polling Telegram (no webhook) | No requiere URL pública para desarrollo local |
 | Whitelist por TELEGRAM_ALLOWED_USER_ID | Seguridad — el bot solo responde al propietario |
 | Re-index ChromaDB tras cada CAPTURE | Siempre fresco, < 2s, sin complejidad incremental |
-| process_message() canal-agnóstico | CLI, Telegram y futura app usan la misma lógica |
+| process_message() canal-agnóstico | CLI, Telegram y API usan la misma lógica |
 | download_kb() en DriveAgent | Descarga KB de Drive antes de procesar para no sobreescribir archivos acumulativos |
+| Credenciales Google en base64 (Railway) | Los archivos de credentials/ son gitignored; se reconstruyen al arrancar desde env vars |
+| Dos servicios Railway (no uno) | Railway corre un proceso por servicio; worker+web requieren servicios separados |
+| Clasificador de dos niveles (ACTION) | Level 1 detecta que es acción, Level 2 determina cuál — más robusto que un solo clasificador con muchas categorías |
+| Sin auth en API por ahora | URL no es fácil de adivinar; se agrega API Key cuando empiece el frontend |
 
 ---
 
 ## Estado actual
 
-### ✅ Completado (pasos 0–20)
+### ✅ Completado
+
 - Pipeline completo: MP3 → transcripción → análisis → Knowledge Base
 - Google Tasks, Calendar, Drive (opcionales)
 - LangGraph StateGraph con manejo de errores
-- RAG conversacional con ChromaDB (QUERY + CAPTURE + PIPELINE)
-- Bot de Telegram con voz, texto y comando /procesar
-- MessageHandler canal-agnóstico + agent_factory
-- Documentación: roadmap, decisions log (30 decisiones), first_agent_knowledge/ (bóveda Obsidian 35 notas), site/presentacion.html, site/architecture.html
+- RAG conversacional con ChromaDB
+- Clasificador de intención de dos niveles: QUERY / CAPTURE / PIPELINE / ACTION
+- Acciones: marcar tareas como completadas, archivar eventos pasados
+- Bot de Telegram con voz, texto y comando /procesar — corriendo 24/7 en Railway
+- API HTTP (FastAPI) con /chat y /kb/{category} — corriendo en Railway
+- Credenciales Google inyectadas via variables de entorno en Railway
+- Documentación: roadmap, decisions log, Obsidian vault (35 notas), presentacion.html, architecture.html
 
 ### ⏳ Pendiente
-- **Paso 21 — App propia (nuevo proyecto)**: dashboard web con chat IA + vistas de ideas/tareas/calendario/reuniones. Backend FastAPI reutilizando `core/`. Proyecto separado.
-- **Despliegue 24/7 del bot**: el bot actualmente requiere que la PC esté encendida. Opciones evaluadas: Railway.app, Google Compute Engine e2-micro (free tier), webhook + Cloud Run Service. **No decidido aún.**
-- **Cloud Run para main.py (paso 17)**: infraestructura lista en Google Cloud (proyecto second-brain-agent-496418, secrets en Secret Manager), pero el Job fue cancelado. Se retoma cuando se decida la estrategia de despliegue.
 
-### Google Cloud — estado actual
-- **Proyecto**: `second-brain-agent-496418`
-- **APIs habilitadas**: Cloud Run, Cloud Scheduler, Secret Manager, Cloud Build
-- **Secrets en Secret Manager**: OPENAI_API_KEY, GOOGLE_CREDENTIALS, GOOGLE_TOKEN_TASKS, GOOGLE_TOKEN_CALENDAR, GOOGLE_TOKEN_DRIVE
-- **Container image**: `gcr.io/second-brain-agent-496418/second-brain-agent` (existe, está desactualizada)
-- **Cloud Run Job**: eliminado (se canceló el enfoque de Job automático)
-
----
-
-## Próxima decisión pendiente
-
-Elegir dónde desplegar el bot de Telegram para que corra 24/7 sin la laptop:
-1. **Railway.app** — más simple, free tier, 15 min de setup
-2. **Google Compute Engine e2-micro** — free tier permanente, ya tienen Google Cloud
-3. **Webhook + Cloud Run Service** — más complejo, paga por request
+- **Paso 21 — App frontend (nuevo proyecto)**: dashboard web que consume la API. Repo separado.
+  Ver `CONTEXT_API.md` para toda la información técnica necesaria para ese proyecto.
+- **Auth en la API**: agregar `X-API-Key` header una vez que empiece el frontend.
+- **Persistencia en Railway**: chroma_db/ y Knowledge_Base/ son efímeros. Agregar Railway Volume si se necesita persistencia entre deploys.

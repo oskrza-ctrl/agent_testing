@@ -1,13 +1,13 @@
 # Second Brain Agent
 
-Sistema personal de captura y organización del conocimiento. Procesa audios de voz, los transcribe, clasifica el contenido automáticamente y lo organiza en una Knowledge Base en Markdown — con integraciones a Google Tasks, Google Calendar, Google Drive y un agente conversacional consultable desde Telegram.
+Sistema personal de captura y organización del conocimiento. Procesa audios de voz, los transcribe, clasifica el contenido automáticamente y lo organiza en una Knowledge Base en Markdown — con integraciones a Google Tasks, Google Calendar, Google Drive, un agente conversacional consultable desde Telegram, y una API HTTP para consumir desde cualquier app.
 
 ---
 
 ## Qué hace
 
 ```
-Audio MP3 / Nota de voz / Texto
+Audio MP3 / Nota de voz / Texto / Llamada HTTP
         ↓
 Transcripción (Whisper-1)
         ↓
@@ -19,10 +19,12 @@ Knowledge Base Markdown  ←→  Google Tasks
         ↓
 Consulta semántica (RAG + ChromaDB)
         ↓
-Chat conversacional: terminal o Telegram
+Chat conversacional: terminal · Telegram · API HTTP
 ```
 
 **6 categorías de contenido:** Idea · Tarea · Recordatorio · Reunión · Proyecto · Nota general
+
+**4 intenciones del agente:** QUERY · CAPTURE · PIPELINE · ACTION
 
 ---
 
@@ -31,8 +33,36 @@ Chat conversacional: terminal o Telegram
 | Comando | Para qué |
 |---------|----------|
 | `python main.py` | Procesa todos los MP3 de `input/` |
-| `python chat.py` | Chat en terminal (consulta + captura por texto) |
+| `python chat.py` | Chat en terminal (consulta + captura + acciones) |
 | `python telegram_bot.py` | Bot de Telegram (voz + texto desde el teléfono) |
+| `python api.py` | API HTTP en `localhost:8000` |
+
+---
+
+## Despliegue (Railway.app)
+
+Dos servicios corriendo 24/7 desde el mismo repo:
+
+| Servicio | Start Command | URL |
+|--|--|--|
+| `agent_testing` | `python telegram_bot.py` | — (bot polling) |
+| `agent-api` | `python api.py` | `https://<tu-dominio>.up.railway.app` |
+
+Cada `git push origin main` redespliega ambos servicios automáticamente.
+
+---
+
+## API — endpoints principales
+
+```
+GET  /health              → estado del servicio
+POST /chat                → {"message": "..."} → {"response": "..."}
+GET  /kb/{category}       → contenido de la Knowledge Base
+```
+
+Categorías: `ideas · tasks · meetings · reminders · projects · notes`
+
+Ver [`CONTEXT_API.md`](CONTEXT_API.md) para documentación completa con ejemplos.
 
 ---
 
@@ -43,6 +73,8 @@ agent_testing/
 ├── main.py                  # Pipeline de procesamiento de MP3
 ├── chat.py                  # Chat conversacional en terminal
 ├── telegram_bot.py          # Bot de Telegram
+├── api.py                   # API HTTP (FastAPI)
+├── Procfile                 # Railway: worker + web
 │
 ├── core/
 │   ├── message_handler.py   # Lógica central canal-agnóstica
@@ -53,10 +85,10 @@ agent_testing/
 │   ├── analysis_agent.py
 │   ├── markdown_agent.py
 │   ├── knowledge_base_agent.py
-│   ├── tasks_agent.py
-│   ├── calendar_agent.py
+│   ├── tasks_agent.py       # + find_and_complete()
+│   ├── calendar_agent.py    # + archive_past_events()
 │   ├── archive_agent.py
-│   ├── drive_agent.py
+│   ├── drive_agent.py       # + download_kb()
 │   └── query_agent.py       # Agente conversacional RAG
 │
 ├── pipeline/                # LangGraph (StateGraph 9 nodos)
@@ -64,13 +96,13 @@ agent_testing/
 │   ├── nodes.py
 │   └── state.py
 │
-├── services/                # Servicios intercambiables
+├── services/
 │   ├── transcription/       # OpenAI Whisper
 │   ├── analysis/            # OpenAI GPT-4o-mini
 │   ├── tasks/               # Google Tasks API
 │   ├── calendar/            # Google Calendar API
 │   ├── drive/               # Google Drive API
-│   └── rag/                 # ChromaDB + embeddings
+│   └── rag/                 # ChromaDB + intent_classifier + action_classifier
 │
 ├── prompts/                 # Prompts en Markdown
 ├── Knowledge_Base/          # Salida organizada
@@ -89,13 +121,13 @@ agent_testing/
 ├── credentials/             # Credenciales Google (gitignored)
 │
 ├── docs/                    # Documentación técnica
-├── site/                    # Roadmap visual (abrir index.html)
-└── first_agent_knowledge/   # Bóveda Obsidian con documentación del proyecto
+├── site/                    # Presentación y arquitectura visual
+└── first_agent_knowledge/   # Bóveda Obsidian con 35 notas del proyecto
 ```
 
 ---
 
-## Setup
+## Setup local
 
 ### 1. Instalar dependencias
 
@@ -121,7 +153,7 @@ OPENAI_API_KEY=sk-proj-...
 
 ### 3. Integraciones opcionales de Google
 
-Para Tasks, Calendar y Drive necesitas:
+Para Tasks, Calendar y Drive:
 1. Crear un proyecto en [Google Cloud Console](https://console.cloud.google.com)
 2. Habilitar las APIs: Tasks, Calendar, Drive
 3. Crear credenciales OAuth 2.0 → descargar como `credentials/credentials.json`
@@ -136,21 +168,10 @@ Para Tasks, Calendar y Drive necesitas:
    TELEGRAM_BOT_TOKEN=tu_token
    TELEGRAM_ALLOWED_USER_ID=tu_id_de_telegram
    ```
-   Tu ID lo obtienes escribiéndole a **@userinfobot**.
 
 ---
 
 ## Uso
-
-### Procesar audios
-
-Coloca archivos `.mp3` en `input/` y ejecuta:
-
-```bash
-python main.py
-```
-
-El sistema transcribe, clasifica, organiza en la Knowledge Base y (si están configuradas) crea tareas en Google Tasks y eventos en Google Calendar.
 
 ### Chat en terminal
 
@@ -158,23 +179,21 @@ El sistema transcribe, clasifica, organiza en la Knowledge Base y (si están con
 python chat.py
 ```
 
-Escribe preguntas o captura contenido nuevo:
-- `¿qué ideas tengo del proyecto X?` → búsqueda semántica en la KB
-- `idea: automatizar el reporte semanal` → clasifica y guarda en la KB
-- `reset` → nueva conversación
-- `salir` → cerrar
+| Ejemplo | Intención |
+|--|--|
+| `¿qué ideas tengo del proyecto X?` | QUERY — búsqueda semántica |
+| `idea: automatizar el reporte semanal` | CAPTURE — guarda en KB |
+| `marca como completada la tarea de llamar a Juan` | ACTION — completa en Google Tasks |
+| `archiva los eventos pasados` | ACTION — borra eventos pasados del calendario |
+| `procesa los audios` | PIPELINE — procesa MP3s del inbox |
 
-### Bot de Telegram
+### API HTTP
 
 ```bash
-python telegram_bot.py
+python api.py
+# Disponible en http://localhost:8000
+# Docs interactivas: http://localhost:8000/docs
 ```
-
-Desde Telegram:
-- Envía una nota de voz → se transcribe y guarda automáticamente
-- Escribe un mensaje → el agente detecta si es pregunta o captura
-- `/reset` → nueva conversación
-- `/start` → instrucciones
 
 ---
 
@@ -192,13 +211,18 @@ Desde Telegram:
 | Calendario | Google Calendar API |
 | Almacenamiento | Google Drive API |
 | Bot | python-telegram-bot |
+| API | FastAPI + uvicorn |
+| Despliegue | Railway.app |
 
 ---
 
 ## Documentación
 
+- [`CONTEXT.md`](CONTEXT.md) — contexto completo para retomar el proyecto
+- [`CONTEXT_API.md`](CONTEXT_API.md) — guía técnica para construir el frontend
 - [`docs/roadmap_second_brain_agent.md`](docs/roadmap_second_brain_agent.md) — fases del proyecto
 - [`docs/decisions_log.md`](docs/decisions_log.md) — registro de decisiones técnicas
 - [`site/index.html`](site/index.html) — roadmap visual interactivo
 - [`site/architecture.html`](site/architecture.html) — diagrama de arquitectura
-- [`first_agent_knowledge/`](first_agent_knowledge/) — bóveda Obsidian con 35 notas explicando cada concepto del proyecto
+- [`site/presentacion.html`](site/presentacion.html) — presentación de 21 slides
+- [`first_agent_knowledge/`](first_agent_knowledge/) — bóveda Obsidian con 35 notas
