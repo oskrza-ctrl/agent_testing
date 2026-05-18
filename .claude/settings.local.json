@@ -3,7 +3,13 @@
     "allow": [
       "Bash(python -c ' *)",
       "Bash(pip install *)",
-      "Bash(python -c \"from telegram import Update; print\\('python-telegram-bot OK'\\)\")"
+      "Bash(python -c \"from telegram import Update; print\\('python-telegram-bot OK'\\)\")",
+      "Skill(frontend-design)",
+      "Skill(frontend-design:*)",
+      "Bash(gcloud --version)",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)",
+      "Bash(git push *)"
     ]
   }
 }
