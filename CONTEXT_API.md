@@ -177,6 +177,9 @@ Content-Type: application/json
 Actualiza o agrega el campo `**Progreso:**` en la entrada del proyecto.
 El cambio se persiste en Google Drive automáticamente.
 
+`{project_name}` es búsqueda **parcial e insensible a mayúsculas** sobre el encabezado `##`.
+Ejemplo: `"finanzas"` encuentra `## 2026-05-19 — Desarrollo de una App de Finanzas Personales`.
+
 ```
 PATCH /kb/projects/Proyecto%20SAT/progress
 Content-Type: application/json
@@ -201,6 +204,8 @@ Content-Type: application/json
 
 Agrega un comentario con fecha al final de la entrada del proyecto. Crea la sección `## Comentarios` si no existe.
 El cambio se persiste en Google Drive automáticamente.
+
+`{project_name}` es búsqueda **parcial e insensible a mayúsculas** — igual que el endpoint de progress.
 
 ```
 POST /kb/projects/Proyecto%20SAT/comments
