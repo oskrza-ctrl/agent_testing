@@ -45,13 +45,13 @@ Para cada tarea o recordatorio detectado:
 ## Paso 4 — Manejar fechas y ambigüedades
 
 **Regla crítica sobre fechas:**
-NUNCA conviertas referencias temporales relativas en fechas absolutas inventadas.
-- "mañana a las 7pm"   → preservar como "mañana a las 19:00"
-- "el viernes"         → preservar como "el viernes"
-- "la próxima semana"  → preservar como "la próxima semana"
+Se te proporcionará la fecha de hoy al inicio del contexto. Úsala para resolver referencias relativas:
+- "hoy"               → fecha de hoy en formato YYYY-MM-DD
+- "mañana a las 7pm"  → fecha de mañana + " a las 19:00"
+- "el viernes"        → calcula la fecha del próximo viernes
+- "la próxima semana" → preservar como "la próxima semana" (sin fecha exacta)
 
-Si la fecha no aparece de forma explícita y absoluta en el transcript, escribe
-el texto tal como lo dijo el usuario. No calcules ni inventes fechas.
+Si NO tienes fecha de referencia o la referencia es ambigua, preserva el texto original.
 
 **Regla general de ambigüedades:**
 - Si un elemento no está claro, márcalo como `requiere revisión`.

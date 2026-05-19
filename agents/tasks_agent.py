@@ -81,16 +81,21 @@ class TasksAgent:
 
     def run(self, result: AnalysisResult, source: str) -> None:
         created = 0
+        prefix  = self._project_prefix(result.related_project)
+        notes   = self._category_notes(result)
 
-        prefix = self._project_prefix(result.related_project)
+        # If category is Tarea but tasks[] is empty, create task from title
+        task_list = result.tasks
+        if result.category == "Tarea" and not task_list:
+            task_list = [result.title]
 
-        for task_text in result.tasks:
+        for task_text in task_list:
             if self._is_ambiguous(task_text):
                 print(f"[TasksAgent] Skipping ambiguous task: '{task_text[:60]}'")
                 continue
             due   = self._resolve_date(task_text)
             title = prefix + self._clean(task_text)
-            if self._create_if_new(title, source, result.summary, due):
+            if self._create_if_new(title, source, notes, due):
                 created += 1
 
         for reminder_text in result.reminders:
@@ -101,7 +106,7 @@ class TasksAgent:
                 continue  # ambiguous, skip
             due   = self._resolve_date(reminder_text)
             title = prefix + self._clean(reminder_text)
-            if self._create_if_new(title, source, result.summary, due):
+            if self._create_if_new(title, source, notes, due):
                 created += 1
 
         if created == 0:
@@ -110,6 +115,17 @@ class TasksAgent:
             print(f"[TasksAgent] {created} task(s) created in Google Tasks.")
 
     # ── Routing helpers ───────────────────────────────────
+
+    def _category_notes(self, result: AnalysisResult) -> str:
+        """Build task notes with hashtags linking to the source meeting or project."""
+        base = result.summary or ""
+        if result.category == "Reunión":
+            tag = result.title.replace(" ", "-").lower()
+            return f"{base}\n#reunion-{tag} #Reuniones"
+        if result.category == "Proyecto":
+            tag = (result.related_project or result.title).replace(" ", "-").lower()
+            return f"{base}\n#proyecto-{tag} #Proyectos"
+        return base
 
     def _is_ambiguous(self, text: str) -> bool:
         lower = text.lower()
