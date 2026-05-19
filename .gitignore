@@ -5,3 +5,7 @@ __pycache__/
 credentials/
 chroma_db/
 temp/
+Knowledge_Base/
+output/
+processed/
+input/
