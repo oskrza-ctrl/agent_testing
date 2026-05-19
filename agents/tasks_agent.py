@@ -52,13 +52,13 @@ class TasksAgent:
             return "No tienes tareas pendientes en Google Tasks."
 
         task_list = "\n".join(
-            f"{i+1}. [{t['id']}] {t['title']}" for i, t in enumerate(tasks)
+            f"{i+1}. ID={t['id']} | {t['title']}" for i, t in enumerate(tasks)
         )
         prompt = (
             f"El usuario quiere completar esta tarea: \"{query}\"\n\n"
             f"Lista de tareas pendientes:\n{task_list}\n\n"
-            "Responde ÚNICAMENTE con el ID de la tarea que mejor coincide, "
-            "o con la palabra 'none' si ninguna coincide."
+            "Responde ÚNICAMENTE con el valor del ID (solo el texto después de 'ID=', "
+            "sin corchetes ni texto extra), o con la palabra 'none' si ninguna coincide."
         )
         response = client.chat.completions.create(
             model="gpt-4o-mini",
@@ -66,7 +66,7 @@ class TasksAgent:
             temperature=0,
             max_tokens=50,
         )
-        task_id = response.choices[0].message.content.strip()
+        task_id = response.choices[0].message.content.strip().strip("[]")
 
         if task_id.lower() == "none":
             return f"No encontré ninguna tarea que coincida con \"{query}\"."
