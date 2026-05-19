@@ -145,6 +145,13 @@ def health():
     return {"status": "ok"}
 
 
+@app.post("/kb/sync")
+def kb_sync():
+    """Force a full KB download from Google Drive."""
+    _download_kb_from_drive()
+    return {"ok": True, "message": "KB sincronizada desde Drive"}
+
+
 @app.post("/chat", response_model=ChatResponse)
 def chat(req: ChatRequest):
     if not req.message.strip():
