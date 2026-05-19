@@ -151,6 +151,7 @@ Los archivos vienen ordenados del más reciente al más antiguo.
 ### PATCH /kb/ideas/{entry_title}
 
 Edita el campo Resumen de una idea existente, buscándola por su título exacto.
+El cambio se persiste en Google Drive automáticamente.
 
 ```
 PATCH /kb/ideas/Mi%20idea%20sobre%20RAG
@@ -174,6 +175,7 @@ Content-Type: application/json
 ### PATCH /kb/projects/{project_name}/progress
 
 Actualiza o agrega el campo `**Progreso:**` en la entrada del proyecto.
+El cambio se persiste en Google Drive automáticamente.
 
 ```
 PATCH /kb/projects/Proyecto%20SAT/progress
@@ -198,6 +200,7 @@ Content-Type: application/json
 ### POST /kb/projects/{project_name}/comments
 
 Agrega un comentario con fecha al final de la entrada del proyecto. Crea la sección `## Comentarios` si no existe.
+El cambio se persiste en Google Drive automáticamente.
 
 ```
 POST /kb/projects/Proyecto%20SAT/comments
@@ -217,6 +220,23 @@ Formato del comentario insertado: `- YYYY-MM-DD: texto del comentario`
 
 **Errores:**
 - `404` si el proyecto no existe
+
+---
+
+### POST /kb/sync
+
+Fuerza una descarga de la Knowledge Base completa desde Google Drive. Útil para que la API vea capturas nuevas hechas desde Telegram sin necesitar redeploy.
+
+```
+POST /kb/sync
+```
+
+**Respuesta:**
+```json
+{"ok": true, "message": "KB sincronizada desde Drive"}
+```
+
+Llama este endpoint antes de mostrar cualquier vista de KB si necesitas datos frescos.
 
 ---
 
