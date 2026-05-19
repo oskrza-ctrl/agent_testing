@@ -85,6 +85,31 @@ def _download_kb_from_drive() -> None:
         print(f"[api] No se pudo descargar KB de Drive: {e}")
 
 
+def _upload_file_to_drive(local_file: Path) -> None:
+    """Upload a single KB file back to Google Drive after a write operation."""
+    kb_folder_id = os.getenv("GOOGLE_DRIVE_KB_FOLDER_ID", "")
+    drive_token  = Path(os.getenv("GOOGLE_DRIVE_TOKEN_FILE", "credentials/token_drive.json"))
+    creds_file   = Path(os.getenv("GOOGLE_CREDENTIALS_FILE", "credentials/credentials.json"))
+
+    if not kb_folder_id or not creds_file.exists():
+        return
+    try:
+        from services.drive.google_drive_service import GoogleDriveService
+        from agents.drive_agent import DriveAgent
+        svc   = GoogleDriveService(creds_file, drive_token)
+        agent = DriveAgent(
+            drive_svc           = svc,
+            inbox_folder_id     = os.getenv("GOOGLE_DRIVE_INBOX_FOLDER_ID", ""),
+            processed_folder_id = os.getenv("GOOGLE_DRIVE_PROCESSED_FOLDER_ID", ""),
+            kb_folder_id        = kb_folder_id,
+            local_input_dir     = Path("input"),
+            local_kb_dir        = Path("Knowledge_Base"),
+        )
+        agent.upload_kb_file(local_file)
+    except Exception as e:
+        print(f"[api] No se pudo subir {local_file.name} a Drive: {e}")
+
+
 def get_handler():
     global _handler
     if _handler is None:
@@ -184,6 +209,7 @@ def edit_idea(entry_title: str, req: EditIdeaRequest):
         count=1,
     )
     ideas_file.write_text(updated, encoding="utf-8")
+    _upload_file_to_drive(ideas_file)
     return {"ok": True}
 
 
@@ -219,6 +245,7 @@ def update_project_progress(project_name: str, req: UpdateProgressRequest):
 
     updated = content[:match.start(1)] + updated_block + content[match.start(2):]
     projects_file.write_text(updated, encoding="utf-8")
+    _upload_file_to_drive(projects_file)
     return {"ok": True}
 
 
@@ -250,6 +277,7 @@ def add_project_comment(project_name: str, req: AddCommentRequest):
 
     updated = content[:match.start(1)] + updated_block + content[match.start(2):]
     projects_file.write_text(updated, encoding="utf-8")
+    _upload_file_to_drive(projects_file)
     return {"ok": True}
 
 
