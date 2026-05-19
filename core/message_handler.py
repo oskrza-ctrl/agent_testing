@@ -50,6 +50,7 @@ class MessageHandler:
         transcription_agent: Optional[TranscriptionAgent] = None,
         tasks_agent=None,
         calendar_agent=None,
+        drive_agent=None,
     ):
         self.client               = openai_client
         self.rag_service          = rag_service
@@ -62,6 +63,7 @@ class MessageHandler:
         self.transcription_agent  = transcription_agent
         self.tasks_agent          = tasks_agent
         self.calendar_agent       = calendar_agent
+        self.drive_agent          = drive_agent
 
     # ── Public interface ──────────────────────────────────────────
 
@@ -195,6 +197,9 @@ class MessageHandler:
         # Re-index so the new content is queryable immediately
         self.rag_service.index_kb(self.kb_dir)
 
+        # Sync the modified KB file(s) to Google Drive
+        self._sync_kb_to_drive(result)
+
         folder = _FOLDER_LABEL.get(result.category, result.category)
         tags   = " ".join(result.tags) if result.tags else "sin tags"
 
@@ -223,6 +228,35 @@ class MessageHandler:
             return self.calendar_agent.archive_past_events()
 
         return "No entendí qué acción querías ejecutar."
+
+    def _sync_kb_to_drive(self, result) -> None:
+        """Upload the KB file(s) modified by this capture to Google Drive."""
+        if not self.drive_agent:
+            return
+
+        # Accumulative categories → single known file
+        accumulative = {
+            "Idea":         self.kb_dir / "Ideas"         / "ideas.md",
+            "Tarea":        self.kb_dir / "Tasks"         / "tasks.md",
+            "Recordatorio": self.kb_dir / "Reminders"     / "reminders.md",
+            "Proyecto":     self.kb_dir / "Projects"      / "projects.md",
+        }
+        # Individual categories → most recently modified file in folder
+        individual = {
+            "Reunión":      self.kb_dir / "Meetings",
+            "Nota general": self.kb_dir / "General_Notes",
+        }
+
+        if result.category in accumulative:
+            f = accumulative[result.category]
+            if f.exists():
+                self.drive_agent.upload_kb_file(f)
+        elif result.category in individual:
+            folder = individual[result.category]
+            if folder.exists():
+                files = sorted(folder.glob("*.md"), key=lambda x: x.stat().st_mtime, reverse=True)
+                if files:
+                    self.drive_agent.upload_kb_file(files[0])
 
     def _run_tasks(self, result, source: str) -> str:
         if not self.tasks_agent or not result.tasks:

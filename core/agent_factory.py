@@ -84,6 +84,7 @@ def build_message_handler(
     )
     tasks_agent    = _build_tasks_agent(credentials_file, kb_dir)
     calendar_agent = _build_calendar_agent(credentials_file, kb_dir)
+    drive_agent    = _build_drive_agent(credentials_file, kb_dir)
 
     return MessageHandler(
         openai_client        = client,
@@ -97,6 +98,7 @@ def build_message_handler(
         output_dir           = output_dir,
         tasks_agent          = tasks_agent,
         calendar_agent       = calendar_agent,
+        drive_agent          = drive_agent,
     )
 
 
@@ -128,4 +130,28 @@ def _build_calendar_agent(credentials_file: Path, kb_dir: Path):
         return CalendarAgent(svc, kb_dir / "Reminders" / "created_events.json")
     except Exception as e:
         print(f"[factory] Google Calendar no disponible: {e}")
+        return None
+
+
+def _build_drive_agent(credentials_file: Path, kb_dir: Path):
+    drive_token    = Path(os.getenv("GOOGLE_DRIVE_TOKEN_FILE", "credentials/token_drive.json"))
+    inbox_id       = os.getenv("GOOGLE_DRIVE_INBOX_FOLDER_ID", "")
+    processed_id   = os.getenv("GOOGLE_DRIVE_PROCESSED_FOLDER_ID", "")
+    kb_folder_id   = os.getenv("GOOGLE_DRIVE_KB_FOLDER_ID", "")
+    if not credentials_file.exists() or not kb_folder_id:
+        return None
+    try:
+        from services.drive.google_drive_service import GoogleDriveService
+        from agents.drive_agent import DriveAgent
+        svc = GoogleDriveService(credentials_file, drive_token)
+        return DriveAgent(
+            drive_svc          = svc,
+            inbox_folder_id    = inbox_id,
+            processed_folder_id= processed_id,
+            kb_folder_id       = kb_folder_id,
+            local_input_dir    = Path("input"),
+            local_kb_dir       = kb_dir,
+        )
+    except Exception as e:
+        print(f"[factory] Google Drive no disponible: {e}")
         return None
