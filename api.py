@@ -235,10 +235,10 @@ def update_project_progress(project_name: str, req: UpdateProgressRequest):
     progress_line = f"**Progreso:** {req.progress}%"
     progress_pattern = re.compile(r"\*\*Progreso:\*\*[^\n]*")
 
-    # Find the project block
+    # Find the project block — partial case-insensitive match on the header line
     project_pattern = re.compile(
-        rf"(## {re.escape(project_name)}.*?)(\n## |\Z)",
-        re.DOTALL,
+        rf"(## [^\n]*{re.escape(project_name)}[^\n]*\n.*?)(\n## |\Z)",
+        re.DOTALL | re.IGNORECASE,
     )
     match = project_pattern.search(content)
     if not match:
@@ -266,8 +266,8 @@ def add_project_comment(project_name: str, req: AddCommentRequest):
     content = projects_file.read_text(encoding="utf-8")
 
     project_pattern = re.compile(
-        rf"(## {re.escape(project_name)}.*?)(\n## |\Z)",
-        re.DOTALL,
+        rf"(## [^\n]*{re.escape(project_name)}[^\n]*\n.*?)(\n## |\Z)",
+        re.DOTALL | re.IGNORECASE,
     )
     match = project_pattern.search(content)
     if not match:
