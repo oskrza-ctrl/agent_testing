@@ -34,6 +34,8 @@ app = FastAPI(title="Second Brain Agent API")
 
 @app.on_event("startup")
 def startup():
+    from core.agent_factory import _write_google_credentials_from_env
+    _write_google_credentials_from_env()
     _download_kb_from_drive()
 
 
