@@ -4,6 +4,7 @@ MessageHandler — núcleo de la lógica conversacional.
 Cualquier canal (CLI, Telegram, API web, app) llama a process_message()
 y recibe una respuesta en texto. El canal no sabe nada del pipeline interno.
 """
+import re
 from datetime import datetime
 from pathlib import Path
 from typing import Optional
@@ -68,15 +69,32 @@ class MessageHandler:
     # ── Public interface ──────────────────────────────────────────
 
     def process_message(self, text: str) -> str:
-        """Classify intent and route to the right handler. Returns a response string."""
+        """Route message: pipeline and actions are explicit; everything else is conversational."""
         intent = classify_intent(self.client, text)
         if intent == "PIPELINE":
             return self.run_pipeline()
-        if intent == "CAPTURE":
-            return self._handle_capture(text)
         if intent == "ACTION":
             return self._handle_action(text)
-        return self.query_agent.chat(text)
+
+        # Conversational flow — GPT responds naturally and decides when to capture
+        response = self.query_agent.chat(text)
+        return self._process_capture_marker(response)
+
+    def _process_capture_marker(self, response: str) -> str:
+        """Detect [CAPTURE: ...] marker in GPT response, execute capture silently, return clean message."""
+        match = re.search(r'\[CAPTURE:(.*?)\]', response, re.DOTALL)
+        if not match:
+            return response
+
+        capture_text = match.group(1).strip()
+        clean_response = re.sub(r'\[CAPTURE:.*?\]', '', response, flags=re.DOTALL).strip()
+
+        # Execute capture silently
+        capture_result = self._handle_capture(capture_text)
+
+        # Append a brief save confirmation
+        folder = capture_result.split("\n")[0] if capture_result else ""
+        return f"{clean_response}\n\n_{folder}_"
 
     def run_pipeline(self) -> str:
         """Run the full MP3 processing pipeline and return a conversational summary."""
