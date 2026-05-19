@@ -54,10 +54,7 @@ class ChromaDBRAGService(RAGService):
         col = self._get_collection()
 
         if col is None or col.count() == 0:
-            return (
-                "Tu base de conocimiento está vacía. "
-                "Empieza capturando ideas, tareas o notas para poder consultarlas."
-            )
+            return self._generate_without_context(message, history)
 
         # Retrieve most similar chunks
         query_embedding = self._embed([message])[0]
@@ -106,6 +103,16 @@ class ChromaDBRAGService(RAGService):
             header = f"[{meta['category']} | {meta['source']} | {meta.get('date', '')}]"
             parts.append(f"{header}\n{doc}")
         return "\n\n---\n\n".join(parts)
+
+    def _generate_without_context(self, message: str, history: List[Dict]) -> str:
+        """Respond conversationally when the KB is empty or has no relevant results."""
+        messages = history + [{"role": "user", "content": message}]
+        response = self.client.chat.completions.create(
+            model=self.CHAT_MODEL,
+            messages=messages,
+            temperature=0.5,
+        )
+        return response.choices[0].message.content.strip()
 
     def _generate(self, message: str, context: str, history: List[Dict]) -> str:
         from services.prompt_loader import load_prompt
