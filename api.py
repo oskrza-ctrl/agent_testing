@@ -31,6 +31,12 @@ load_dotenv()
 
 app = FastAPI(title="Second Brain Agent API")
 
+
+@app.on_event("startup")
+def startup():
+    _download_kb_from_drive()
+
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -49,6 +55,32 @@ KB_FOLDER_MAP = {
 }
 
 _handler = None
+
+
+def _download_kb_from_drive() -> None:
+    """Download Knowledge Base from Google Drive before serving requests."""
+    kb_folder_id  = os.getenv("GOOGLE_DRIVE_KB_FOLDER_ID", "")
+    drive_token   = Path(os.getenv("GOOGLE_DRIVE_TOKEN_FILE", "credentials/token_drive.json"))
+    creds_file    = Path(os.getenv("GOOGLE_CREDENTIALS_FILE", "credentials/credentials.json"))
+
+    if not kb_folder_id or not creds_file.exists():
+        print("[api] Google Drive no configurado — KB local vacía.")
+        return
+    try:
+        from services.drive.google_drive_service import GoogleDriveService
+        from agents.drive_agent import DriveAgent
+        svc   = GoogleDriveService(creds_file, drive_token)
+        agent = DriveAgent(
+            drive_svc           = svc,
+            inbox_folder_id     = os.getenv("GOOGLE_DRIVE_INBOX_FOLDER_ID", ""),
+            processed_folder_id = os.getenv("GOOGLE_DRIVE_PROCESSED_FOLDER_ID", ""),
+            kb_folder_id        = kb_folder_id,
+            local_input_dir     = Path("input"),
+            local_kb_dir        = Path("Knowledge_Base"),
+        )
+        agent.download_kb()
+    except Exception as e:
+        print(f"[api] No se pudo descargar KB de Drive: {e}")
 
 
 def get_handler():
