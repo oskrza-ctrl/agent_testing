@@ -5,17 +5,24 @@ Uso:
     python api.py
 
 Endpoints:
-    GET  /health        — estado del servicio
-    POST /chat          — mensaje de texto → respuesta del agente
-    GET  /kb/{category} — contenido de una categoría de la Knowledge Base
+    GET   /health                                  — estado del servicio
+    POST  /chat                                    — mensaje de texto → respuesta del agente
+    GET   /kb/{category}                           — contenido de una categoría de la Knowledge Base
+    PATCH /kb/ideas/{entry_title}                  — editar resumen de una idea
+    PATCH /kb/projects/{project_name}/progress     — actualizar progreso de un proyecto
+    POST  /kb/projects/{project_name}/comments     — agregar comentario a un proyecto
+    GET   /kb/meetings/{filename}/download         — descargar archivo MD de una reunión
 """
 import os
+import re
+from datetime import date
 from pathlib import Path
 
 import uvicorn
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
 from pydantic import BaseModel
 
 from core.agent_factory import build_message_handler
@@ -62,6 +69,15 @@ class ChatRequest(BaseModel):
 class ChatResponse(BaseModel):
     response: str
 
+class EditIdeaRequest(BaseModel):
+    summary: str
+
+class UpdateProgressRequest(BaseModel):
+    progress: int
+
+class AddCommentRequest(BaseModel):
+    comment: str
+
 
 # ── Endpoints ─────────────────────────────────────────────────────
 
@@ -106,6 +122,117 @@ def kb(category: str):
             for f in files
         ],
     }
+
+
+# ── KB write endpoints ────────────────────────────────────────────
+
+@app.patch("/kb/ideas/{entry_title}")
+def edit_idea(entry_title: str, req: EditIdeaRequest):
+    """Replace the Resumen field of an idea entry identified by its title."""
+    ideas_file = Path("Knowledge_Base/Ideas/ideas.md")
+    if not ideas_file.exists():
+        raise HTTPException(status_code=404, detail="Archivo de ideas no encontrado.")
+
+    content = ideas_file.read_text(encoding="utf-8")
+
+    # Find the entry block starting with ## <title>
+    pattern = re.compile(
+        rf"(## {re.escape(entry_title)}.*?)"   # header + content up to Resumen
+        rf"(\*\*Resumen:\*\*[^\n]*)",          # Resumen line to replace
+        re.DOTALL,
+    )
+    if not pattern.search(content):
+        raise HTTPException(status_code=404, detail=f"Idea '{entry_title}' no encontrada.")
+
+    updated = pattern.sub(
+        lambda m: m.group(1) + f"**Resumen:** {req.summary}",
+        content,
+        count=1,
+    )
+    ideas_file.write_text(updated, encoding="utf-8")
+    return {"ok": True}
+
+
+@app.patch("/kb/projects/{project_name}/progress")
+def update_project_progress(project_name: str, req: UpdateProgressRequest):
+    """Update or add a Progreso field in a project's MD file."""
+    if not (0 <= req.progress <= 100):
+        raise HTTPException(status_code=400, detail="El progreso debe estar entre 0 y 100.")
+
+    projects_file = Path("Knowledge_Base/Projects/projects.md")
+    if not projects_file.exists():
+        raise HTTPException(status_code=404, detail="Archivo de proyectos no encontrado.")
+
+    content = projects_file.read_text(encoding="utf-8")
+
+    progress_line = f"**Progreso:** {req.progress}%"
+    progress_pattern = re.compile(r"\*\*Progreso:\*\*[^\n]*")
+
+    # Find the project block
+    project_pattern = re.compile(
+        rf"(## {re.escape(project_name)}.*?)(\n## |\Z)",
+        re.DOTALL,
+    )
+    match = project_pattern.search(content)
+    if not match:
+        raise HTTPException(status_code=404, detail=f"Proyecto '{project_name}' no encontrado.")
+
+    block = match.group(1)
+    if progress_pattern.search(block):
+        updated_block = progress_pattern.sub(progress_line, block, count=1)
+    else:
+        updated_block = block.rstrip() + f"\n{progress_line}\n"
+
+    updated = content[:match.start(1)] + updated_block + content[match.start(2):]
+    projects_file.write_text(updated, encoding="utf-8")
+    return {"ok": True}
+
+
+@app.post("/kb/projects/{project_name}/comments")
+def add_project_comment(project_name: str, req: AddCommentRequest):
+    """Append a dated comment to a project entry."""
+    projects_file = Path("Knowledge_Base/Projects/projects.md")
+    if not projects_file.exists():
+        raise HTTPException(status_code=404, detail="Archivo de proyectos no encontrado.")
+
+    content = projects_file.read_text(encoding="utf-8")
+
+    project_pattern = re.compile(
+        rf"(## {re.escape(project_name)}.*?)(\n## |\Z)",
+        re.DOTALL,
+    )
+    match = project_pattern.search(content)
+    if not match:
+        raise HTTPException(status_code=404, detail=f"Proyecto '{project_name}' no encontrado.")
+
+    today = date.today().isoformat()
+    new_comment = f"- {today}: {req.comment}"
+    block = match.group(1)
+
+    if "## Comentarios" in block:
+        updated_block = block.rstrip() + f"\n{new_comment}\n"
+    else:
+        updated_block = block.rstrip() + f"\n\n## Comentarios\n{new_comment}\n"
+
+    updated = content[:match.start(1)] + updated_block + content[match.start(2):]
+    projects_file.write_text(updated, encoding="utf-8")
+    return {"ok": True}
+
+
+@app.get("/kb/meetings/{filename}/download")
+def download_meeting(filename: str):
+    """Download a meeting MD file as an attachment."""
+    meetings_dir = Path("Knowledge_Base/Meetings")
+    file_path = meetings_dir / filename
+
+    if not file_path.exists() or file_path.suffix != ".md":
+        raise HTTPException(status_code=404, detail=f"Reunión '{filename}' no encontrada.")
+
+    return FileResponse(
+        path=str(file_path),
+        media_type="text/markdown",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
 
 
 # ── Main ──────────────────────────────────────────────────────────
