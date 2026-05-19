@@ -53,6 +53,12 @@ class ChromaDBRAGService(RAGService):
     def query(self, message: str, history: List[Dict]) -> str:
         col = self._get_collection()
 
+        if col is None or col.count() == 0:
+            return (
+                "Tu base de conocimiento está vacía. "
+                "Empieza capturando ideas, tareas o notas para poder consultarlas."
+            )
+
         # Retrieve most similar chunks
         query_embedding = self._embed([message])[0]
         results = col.query(
@@ -84,7 +90,10 @@ class ChromaDBRAGService(RAGService):
 
     def _get_collection(self):
         if self._col is None:
-            self._col = self.chroma.get_collection(self.COLLECTION)
+            try:
+                self._col = self.chroma.get_collection(self.COLLECTION)
+            except Exception:
+                return None
         return self._col
 
     def _embed(self, texts: List[str]) -> List[List[float]]:
