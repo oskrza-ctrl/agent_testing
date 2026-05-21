@@ -9,7 +9,10 @@
       "Bash(gcloud --version)",
       "Bash(git add *)",
       "Bash(git commit -m ' *)",
-      "Bash(git push *)"
+      "Bash(git push *)",
+      "PowerShell(Copy-Item \"C:\\\\Users\\\\rocke\\\\OneDrive\\\\Documents\\\\GitHub\\\\agent_testing\\\\CONTEXT_API.md\" -Destination \"C:\\\\Users\\\\rocke\\\\OneDrive\\\\Documents\\\\GitHub\\\\second_brain_app\\\\CONTEXT_API.md\" -Force)",
+      "Bash(git rm *)",
+      "Bash(pip show *)"
     ]
   }
 }

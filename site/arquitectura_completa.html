@@ -1,0 +1,706 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Second Brain Agent — Arquitectura Completa</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: #0f172a;
+      color: #e2e8f0;
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      padding: 40px 32px;
+      min-width: 1100px;
+    }
+
+    h1 {
+      text-align: center;
+      font-size: 26px;
+      font-weight: 800;
+      color: #f8fafc;
+      margin-bottom: 4px;
+      letter-spacing: -0.5px;
+    }
+
+    .subtitle {
+      text-align: center;
+      font-size: 12px;
+      color: #64748b;
+      margin-bottom: 36px;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+
+    /* ── Layout principal ── */
+    .main-layout {
+      display: grid;
+      grid-template-columns: 1fr 210px;
+      gap: 16px;
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    .main-content { display: flex; flex-direction: column; gap: 0; }
+    .side-panel    { display: flex; flex-direction: column; gap: 12px; }
+
+    /* ── Labels de sección ── */
+    .section-label {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #475569;
+      margin-bottom: 8px;
+      padding-left: 2px;
+    }
+
+    /* ── Conectores ── */
+    .connector {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 28px;
+      color: #334155;
+      font-size: 22px;
+    }
+
+    /* ── Filas ── */
+    .row {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 0;
+    }
+
+    /* ── Cajas base ── */
+    .box {
+      border-radius: 8px;
+      padding: 12px 14px;
+      border: 1px solid;
+      flex: 1;
+    }
+
+    .box-title {
+      font-size: 12px;
+      font-weight: 700;
+      margin-bottom: 5px;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .box-subtitle {
+      font-size: 10px;
+      opacity: 0.6;
+      margin-bottom: 5px;
+    }
+
+    .box-items {
+      font-size: 10px;
+      line-height: 1.7;
+      opacity: 0.85;
+    }
+
+    /* ── Colores ── */
+    .blue   { background: #0d2240; border-color: #3b82f6; }
+    .blue   .box-title { color: #60a5fa; }
+
+    .purple { background: #1e0f4a; border-color: #7c3aed; }
+    .purple .box-title { color: #a78bfa; }
+
+    .amber  { background: #2d1000; border-color: #f59e0b; }
+    .amber  .box-title { color: #fbbf24; }
+
+    .green  { background: #021a0d; border-color: #10b981; }
+    .green  .box-title { color: #34d399; }
+
+    .red    { background: #2d0505; border-color: #ef4444; }
+    .red    .box-title { color: #f87171; }
+
+    .orange { background: #2d0c00; border-color: #f97316; }
+    .orange .box-title { color: #fb923c; }
+
+    .sky    { background: #021929; border-color: #0ea5e9; }
+    .sky    .box-title { color: #38bdf8; }
+
+    .gray   { background: #111318; border-color: #374151; }
+    .gray   .box-title { color: #9ca3af; }
+
+    .violet { background: #16063a; border-color: #8b5cf6; }
+    .violet .box-title { color: #c4b5fd; }
+
+    .teal   { background: #011a19; border-color: #14b8a6; }
+    .teal   .box-title { color: #2dd4bf; }
+
+    /* ── Zonas con fondo ── */
+    .zone {
+      border-radius: 10px;
+      padding: 14px;
+      margin-bottom: 0;
+    }
+
+    .zone-infra    { background: rgba(124,58,237,0.06); border: 1px dashed #7c3aed55; }
+    .zone-core     { background: rgba(245,158,11,0.06); border: 1px dashed #f59e0b55; }
+    .zone-services { background: rgba(14,165,233,0.06); border: 1px dashed #0ea5e955; }
+    .zone-storage  { background: rgba(75,85,99,0.1);   border: 1px dashed #4b556355; }
+
+    /* ── Chips de intent ── */
+    .chip {
+      display: inline-block;
+      padding: 2px 7px;
+      border-radius: 4px;
+      font-size: 9px;
+      font-weight: 700;
+      margin: 2px 2px 0 0;
+      letter-spacing: 0.04em;
+    }
+
+    .chip-query    { background:#021a0d; color:#34d399; border:1px solid #10b981; }
+    .chip-capture  { background:#2d0c00; color:#fb923c; border:1px solid #f97316; }
+    .chip-pipeline { background:#021929; color:#38bdf8; border:1px solid #0ea5e9; }
+    .chip-action   { background:#2d0505; color:#f87171; border:1px solid #ef4444; }
+
+    /* ── Nodos LangGraph ── */
+    .pipeline-nodes {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 4px;
+      margin-top: 10px;
+    }
+
+    .node {
+      background: #0d2240;
+      border: 1px solid #3b82f666;
+      border-radius: 5px;
+      padding: 4px 8px;
+      font-size: 10px;
+      color: #93c5fd;
+      white-space: nowrap;
+    }
+
+    .node-arrow { color: #334155; font-size: 13px; }
+
+    /* ── Agentes grid ── */
+    .agents-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 8px;
+    }
+
+    .agent-chip {
+      background: #0f1117;
+      border: 1px solid #1e293b;
+      border-radius: 6px;
+      padding: 6px 10px;
+    }
+
+    .agent-name { font-size: 11px; font-weight: 600; color: #e2e8f0; }
+    .agent-file { font-size: 9px; color: #4b5563; margin-top: 1px; }
+
+    /* ── KB folders ── */
+    .kb-folder {
+      background: #0f1117;
+      border: 1px solid #1e293b;
+      border-radius: 5px;
+      padding: 6px 10px;
+      font-size: 10px;
+      line-height: 1.5;
+    }
+
+    .kb-folder-name { font-weight: 600; color: #cbd5e1; }
+    .kb-folder-file { color: #4b5563; font-size: 9px; }
+
+    /* ── Separador ── */
+    .divider { height: 1px; background: #1e293b; margin: 4px 0; }
+
+    /* ── Leyenda ── */
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 14px;
+      margin-top: 28px;
+      padding-top: 20px;
+      border-top: 1px solid #1e293b;
+      max-width: 1400px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      color: #64748b;
+    }
+
+    .legend-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 2px;
+      flex-shrink: 0;
+    }
+
+    /* ── Separador visual entre zonas ── */
+    .gap { height: 12px; }
+  </style>
+</head>
+<body>
+
+<h1>⚡ Second Brain Agent</h1>
+<p class="subtitle">Diagrama de arquitectura completa — todos los componentes e integraciones</p>
+
+<div class="main-layout">
+
+  <!-- ════════════════ COLUMNA PRINCIPAL ════════════════ -->
+  <div class="main-content">
+
+    <!-- ENTRADA -->
+    <div class="section-label">📥 Canales de Entrada</div>
+    <div class="row">
+      <div class="box blue">
+        <div class="box-title">📱 Telegram</div>
+        <div class="box-items">
+          Mensajes de texto (conversación + captura)<br>
+          Notas de voz .ogg → Whisper transcribe
+        </div>
+      </div>
+      <div class="box blue">
+        <div class="box-title">🌐 Web App</div>
+        <div class="box-subtitle">Vercel · React / Next.js · second_brain_app</div>
+        <div class="box-items">
+          Chat con IA · Vista de Ideas · Tareas<br>
+          Proyectos · Reuniones · Recordatorios
+        </div>
+      </div>
+      <div class="box blue">
+        <div class="box-title">🎵 MP3 / Audio</div>
+        <div class="box-subtitle">Google Drive — carpeta Inbox</div>
+        <div class="box-items">
+          Archivos de audio subidos manualmente<br>
+          Procesados al ejecutar el pipeline
+        </div>
+      </div>
+    </div>
+
+    <div class="connector">↓</div>
+
+    <!-- INFRAESTRUCTURA -->
+    <div class="zone zone-infra">
+      <div class="section-label">☁️ Infraestructura — Railway.app</div>
+      <div class="row">
+        <div class="box purple">
+          <div class="box-title">🤖 Worker Service</div>
+          <div class="box-subtitle">telegram_bot.py · proceso siempre activo</div>
+          <div class="box-items">
+            Escucha mensajes en tiempo real<br>
+            Comandos: /start · /reset<br>
+            Descarga audios a temp/ → procesa<br>
+            Llama a MessageHandler.process_message()
+          </div>
+        </div>
+        <div class="box purple">
+          <div class="box-title">🌐 Web Service — FastAPI</div>
+          <div class="box-subtitle">api.py · Puerto 8080 · Uvicorn</div>
+          <div class="box-items">
+            <strong>GET</strong> /kb/ideas · /kb/tasks · /kb/projects<br>
+            <strong>GET</strong> /kb/meetings · /kb/reminders<br>
+            <strong>POST</strong> /chat · <strong>POST</strong> /kb/sync<br>
+            <strong>PATCH</strong> /kb/projects/{nombre}/progress
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="connector">↓</div>
+
+    <!-- NÚCLEO -->
+    <div class="zone zone-core">
+      <div class="section-label">⚙️ Núcleo — core/message_handler.py</div>
+      <div class="box amber">
+        <div class="box-title">🧠 MessageHandler · process_message(texto)</div>
+        <div style="display:flex; gap:16px; margin-top:10px; flex-wrap:wrap;">
+          <div style="flex:1; min-width:180px;">
+            <div style="font-size:10px; color:#fbbf24; font-weight:700; margin-bottom:5px;">
+              Nivel 1 — Intent Classifier
+            </div>
+            <div style="font-size:9px; color:#92400e; margin-bottom:5px;">services/rag/intent_classifier.py</div>
+            <span class="chip chip-query">QUERY</span>
+            <span class="chip chip-capture">CAPTURE</span>
+            <span class="chip chip-pipeline">PIPELINE</span>
+            <span class="chip chip-action">ACTION</span>
+          </div>
+          <div style="flex:1; min-width:180px;">
+            <div style="font-size:10px; color:#fbbf24; font-weight:700; margin-bottom:5px;">
+              Nivel 2 — Action Classifier
+            </div>
+            <div style="font-size:9px; color:#92400e; margin-bottom:5px;">services/rag/action_classifier.py</div>
+            <span class="chip chip-action">COMPLETE_TASK</span>
+            <span class="chip chip-action">ARCHIVE_EVENTS</span>
+          </div>
+          <div style="flex:1; min-width:180px;">
+            <div style="font-size:10px; color:#fbbf24; font-weight:700; margin-bottom:5px;">
+              Captura implícita
+            </div>
+            <div style="font-size:9px; color:#92400e; line-height:1.6;">
+              QueryAgent responde naturalmente<br>
+              Detecta <code style="color:#fbbf24">[CAPTURE: texto]</code> en respuesta<br>
+              Ejecuta captura sin interrumpir conversación
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="connector">↓</div>
+
+    <!-- TRES RUTAS -->
+    <div class="section-label">🔀 Rutas de Procesamiento</div>
+    <div class="row" style="align-items:stretch;">
+
+      <div class="box green">
+        <div class="box-title">💬 QUERY</div>
+        <div class="box-items">
+          QueryAgent.chat()<br>
+          Historial de sesión en memoria<br>
+          <br>
+          ChromaDB RAG:<br>
+          → embedding del query<br>
+          → búsqueda semántica en KB<br>
+          → GPT-4o-mini + contexto<br>
+          <br>
+          <em style="opacity:0.5">Fallback: responde sin contexto<br>si la KB está vacía</em>
+        </div>
+      </div>
+
+      <div class="box red">
+        <div class="box-title">⚡ ACTION</div>
+        <div class="box-items">
+          <strong>COMPLETE_TASK</strong><br>
+          TasksAgent.find_and_complete()<br>
+          GPT selecciona tarea por ID<br>
+          Google Tasks API → completada<br>
+          <br>
+          <strong>ARCHIVE_EVENTS</strong><br>
+          CalendarAgent.archive_past_events()<br>
+          Google Calendar API → eliminar eventos pasados
+        </div>
+      </div>
+
+      <div class="box orange" style="flex:2;">
+        <div class="box-title">🔄 PIPELINE — LangGraph StateGraph</div>
+        <div class="box-subtitle">pipeline/graph.py · 9 nodos secuenciales · estado compartido PipelineState</div>
+        <div class="pipeline-nodes">
+          <span class="node">🎙️ transcription</span>
+          <span class="node-arrow">→</span>
+          <span class="node">🔍 analysis</span>
+          <span class="node-arrow">→</span>
+          <span class="node">📝 markdown</span>
+          <span class="node-arrow">→</span>
+          <span class="node">🗄️ knowledge_base</span>
+          <span class="node-arrow">→</span>
+          <span class="node">☁️ drive_sync</span>
+          <span class="node-arrow">→</span>
+          <span class="node">✅ tasks</span>
+          <span class="node-arrow">→</span>
+          <span class="node">📅 calendar</span>
+          <span class="node-arrow">→</span>
+          <span class="node">📦 archive</span>
+          <span class="node-arrow">→</span>
+          <span class="node">📁 drive_processed</span>
+        </div>
+        <div style="margin-top:8px; font-size:9px; color:#f9731660; line-height:1.6;">
+          Estado: mp3_path · mp3_name · mp3_stem · transcript · result · error<br>
+          Cada nodo verifica <code>state["error"]</code> antes de ejecutar — fallo no bloquea el grafo
+        </div>
+      </div>
+
+    </div>
+
+    <div class="connector">↓</div>
+
+    <!-- AGENTES -->
+    <div class="zone zone-infra">
+      <div class="section-label">🤖 Agentes — agents/</div>
+      <div class="agents-grid">
+        <div class="agent-chip">
+          <div class="agent-name">🎙️ TranscriptionAgent</div>
+          <div class="agent-file">transcription_agent.py · OpenAI Whisper-1</div>
+        </div>
+        <div class="agent-chip">
+          <div class="agent-name">🔍 AnalysisAgent</div>
+          <div class="agent-file">analysis_agent.py · GPT-4o-mini · 6 categorías · inyecta fecha hoy</div>
+        </div>
+        <div class="agent-chip">
+          <div class="agent-name">📝 MarkdownAgent</div>
+          <div class="agent-file">markdown_agent.py · genera .md estructurado</div>
+        </div>
+        <div class="agent-chip">
+          <div class="agent-name">🗄️ KnowledgeBaseAgent</div>
+          <div class="agent-file">knowledge_base_agent.py · acumulativo por categoría</div>
+        </div>
+        <div class="agent-chip">
+          <div class="agent-name">✅ TasksAgent</div>
+          <div class="agent-file">tasks_agent.py · dedup SHA-256 · due dates · hashtags</div>
+        </div>
+        <div class="agent-chip">
+          <div class="agent-name">📅 CalendarAgent</div>
+          <div class="agent-file">calendar_agent.py · crea y archiva eventos</div>
+        </div>
+        <div class="agent-chip">
+          <div class="agent-name">☁️ DriveAgent</div>
+          <div class="agent-file">drive_agent.py · upload · download · move_to_processed</div>
+        </div>
+        <div class="agent-chip">
+          <div class="agent-name">📦 ArchiveAgent</div>
+          <div class="agent-file">archive_agent.py · mueve MP3s a processed/</div>
+        </div>
+        <div class="agent-chip">
+          <div class="agent-name">💬 QueryAgent</div>
+          <div class="agent-file">query_agent.py · conversación · memoria de sesión</div>
+        </div>
+        <div class="agent-chip">
+          <div class="agent-name">🎛️ OrchestratorAgent</div>
+          <div class="agent-file">orchestrator_agent.py · construye y ejecuta el grafo</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="connector">↓</div>
+
+    <!-- SERVICIOS EXTERNOS -->
+    <div class="zone zone-services">
+      <div class="section-label">🌐 Servicios Externos</div>
+      <div class="row">
+        <div class="box sky">
+          <div class="box-title">🤖 OpenAI API</div>
+          <div class="box-items">
+            <strong>Whisper-1</strong><br>
+            Transcripción de audio/voz<br>
+            <br>
+            <strong>GPT-4o-mini</strong><br>
+            Análisis · Chat · Routing<br>
+            Clasificación de intents<br>
+            <br>
+            <strong>text-embedding-3-small</strong><br>
+            Vectores para RAG en ChromaDB
+          </div>
+        </div>
+        <div class="box sky">
+          <div class="box-title">✅ Google Tasks API</div>
+          <div class="box-items">
+            Crear tareas con due date<br>
+            Listar tareas pendientes<br>
+            Marcar como completadas<br>
+            <br>
+            Dedup por SHA-256<br>
+            Hashtags por categoría<br>
+            (#Reuniones · #Proyectos)
+          </div>
+        </div>
+        <div class="box sky">
+          <div class="box-title">📅 Google Calendar API</div>
+          <div class="box-items">
+            Crear eventos (candidatos)<br>
+            Listar eventos pasados<br>
+            Archivar / eliminar eventos<br>
+            <br>
+            Timezone configurable<br>
+            Marcador: [candidato: Google Calendar]
+          </div>
+        </div>
+        <div class="box sky">
+          <div class="box-title">💾 Google Drive API</div>
+          <div class="box-items">
+            <strong>Inbox/</strong> — MP3s a procesar<br>
+            <strong>Processed/</strong> — MP3s ya procesados<br>
+            <strong>Knowledge_Base/</strong> — archivos .md<br>
+            <br>
+            Credenciales via GOOGLE_*_B64<br>
+            (base64 en Railway Variables)
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="connector">↓</div>
+
+    <!-- ALMACENAMIENTO -->
+    <div class="zone zone-storage">
+      <div class="section-label">🗃️ Almacenamiento</div>
+      <div class="row" style="align-items:stretch;">
+        <div class="box teal">
+          <div class="box-title">🔮 ChromaDB</div>
+          <div class="box-subtitle">Vector Store · chroma_db/ · gitignored</div>
+          <div class="box-items">
+            Embeddings de todos los archivos KB<br>
+            Búsqueda semántica por similitud coseno<br>
+            Re-indexado tras cada captura nueva<br>
+            Colección: <code>second_brain_kb</code><br>
+            <br>
+            Fallback si está vacío: respuesta<br>
+            conversacional sin contexto
+          </div>
+        </div>
+        <div class="box gray" style="flex:2;">
+          <div class="box-title">📚 Knowledge Base — Archivos Markdown</div>
+          <div class="box-subtitle">Knowledge_Base/ · sincronizada con Google Drive · gitignored</div>
+          <div style="display:flex; flex-wrap:wrap; gap:6px; margin-top:10px;">
+            <div class="kb-folder">
+              <div class="kb-folder-name">💡 Ideas/</div>
+              <div class="kb-folder-file">ideas.md (acumulativo)</div>
+            </div>
+            <div class="kb-folder">
+              <div class="kb-folder-name">✅ Tasks/</div>
+              <div class="kb-folder-file">tasks.md (acumulativo)</div>
+            </div>
+            <div class="kb-folder">
+              <div class="kb-folder-name">🚀 Projects/</div>
+              <div class="kb-folder-file">projects.md (acumulativo)</div>
+            </div>
+            <div class="kb-folder">
+              <div class="kb-folder-name">🔔 Reminders/</div>
+              <div class="kb-folder-file">reminders.md (acumulativo)</div>
+            </div>
+            <div class="kb-folder">
+              <div class="kb-folder-name">🤝 Meetings/</div>
+              <div class="kb-folder-file">{fecha-titulo}.md (individual)</div>
+            </div>
+            <div class="kb-folder">
+              <div class="kb-folder-name">📋 General_Notes/</div>
+              <div class="kb-folder-file">{fecha-titulo}.md (individual)</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- fin main-content -->
+
+  <!-- ════════════════ PANEL LATERAL ════════════════ -->
+  <div class="side-panel">
+
+    <div class="section-label">👁️ Observabilidad</div>
+    <div class="box violet">
+      <div class="box-title">🔭 LangSmith</div>
+      <div class="box-subtitle">smith.langchain.com</div>
+      <div class="box-items">
+        Proyecto: Sencond-brain-agent<br>
+        <br>
+        Trazas del pipeline LangGraph:<br>
+        · Tiempo por nodo<br>
+        · Input / Output por paso<br>
+        · Errores por nodo<br>
+        <br>
+        <em style="opacity:0.5">Solo captura ejecuciones<br>del StateGraph (pipeline MP3),<br>no el chat/texto</em>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="section-label">🏗️ Hosting</div>
+    <div class="box purple">
+      <div class="box-title">🚂 Railway.app</div>
+      <div class="box-items">
+        2 servicios activos:<br>
+        · Worker (bot Telegram)<br>
+        · Web (FastAPI API)<br>
+        <br>
+        Variables de entorno:<br>
+        OPENAI_API_KEY<br>
+        TELEGRAM_BOT_TOKEN<br>
+        TELEGRAM_ALLOWED_USER_ID<br>
+        GOOGLE_CREDENTIALS_B64<br>
+        GOOGLE_TOKEN_TASKS_B64<br>
+        GOOGLE_TOKEN_CALENDAR_B64<br>
+        GOOGLE_TOKEN_DRIVE_B64<br>
+        LANGCHAIN_*
+      </div>
+    </div>
+
+    <div class="box blue">
+      <div class="box-title">▲ Vercel</div>
+      <div class="box-items">
+        Hosting del frontend<br>
+        React / Next.js<br>
+        Repositorio: second_brain_app<br>
+        <br>
+        Consume la FastAPI<br>
+        de Railway via HTTP
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="section-label">🔐 Seguridad</div>
+    <div class="box gray">
+      <div class="box-title">🛡️ Acceso</div>
+      <div class="box-items">
+        TELEGRAM_ALLOWED_USER_ID<br>
+        (1 solo usuario permitido)<br>
+        <br>
+        Credenciales Google en base64<br>
+        nunca en código ni git<br>
+        <br>
+        .env gitignored<br>
+        KB gitignored<br>
+        credentials/ gitignored
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="section-label">🐍 Stack Técnico</div>
+    <div class="box gray">
+      <div class="box-title">Librerías clave</div>
+      <div class="box-items">
+        Python 3.11<br>
+        FastAPI + Uvicorn<br>
+        python-telegram-bot<br>
+        LangGraph<br>
+        langchain-core 1.4.0<br>
+        ChromaDB<br>
+        openai SDK<br>
+        google-api-python-client<br>
+        LangSmith (tracing)
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="section-label">💰 Costos Estimados</div>
+    <div class="box gray">
+      <div class="box-title">Por mes</div>
+      <div class="box-items">
+        OpenAI chat: ~$0.001/msg<br>
+        Whisper: $0.006/min audio<br>
+        Railway: ~$5 USD<br>
+        Vercel: gratis (hobby)<br>
+        Google APIs: gratis<br>
+        LangSmith: gratis
+      </div>
+    </div>
+
+  </div><!-- fin side-panel -->
+
+</div><!-- fin main-layout -->
+
+<!-- LEYENDA -->
+<div class="legend">
+  <div class="legend-item"><div class="legend-dot" style="background:#3b82f6;"></div> Canales de entrada</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#7c3aed;"></div> Infraestructura Railway</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#f59e0b;"></div> Núcleo / MessageHandler</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#10b981;"></div> Ruta QUERY (RAG)</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#ef4444;"></div> Ruta ACTION</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#f97316;"></div> Ruta PIPELINE (LangGraph)</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#0ea5e9;"></div> Servicios externos</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#14b8a6;"></div> Vector store (ChromaDB)</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#4b5563;"></div> Almacenamiento KB</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#8b5cf6;"></div> Observabilidad (LangSmith)</div>
+</div>
+
+</body>
+</html>

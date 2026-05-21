@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Second Brain Agent — Diagrama de Bloques</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:       #060c18;
+      --grid:     #0c1628;
+      --text:     #e2e8f0;
+      --muted:    #475569;
+      --dim:      #1e293b;
+
+      --blue:     #3b82f6;
+      --blue-d:   #1d3461;
+      --indigo:   #818cf8;
+      --indigo-d: #1e1b4b;
+      --sky:      #0ea5e9;
+      --sky-d:    #0c2340;
+      --violet:   #a78bfa;
+      --violet-d: #1e1635;
+      --emerald:  #10b981;
+      --emerald-d:#052e16;
+      --lime:     #84cc16;
+      --lime-d:   #162805;
+      --orange:   #f97316;
+      --orange-d: #2c1204;
+      --purple:   #c084fc;
+      --purple-d: #1e1235;
+    }
+
+    body {
+      background-color: var(--bg);
+      background-image:
+        linear-gradient(var(--grid) 1px, transparent 1px),
+        linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+      background-size: 36px 36px;
+      color: var(--text);
+      font-family: 'Space Mono', monospace;
+      min-height: 100vh;
+      padding: 48px 40px 64px;
+    }
+
+    /* ── Header ──────────────────────────────────── */
+    header {
+      text-align: center;
+      margin-bottom: 44px;
+    }
+    header h1 {
+      font-family: 'Syne', sans-serif;
+      font-size: 26px;
+      font-weight: 800;
+      color: #f8fafc;
+      letter-spacing: -0.5px;
+      margin-bottom: 6px;
+    }
+    header p {
+      font-size: 10px;
+      color: var(--muted);
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+    }
+
+    /* ── Diagram wrapper ─────────────────────────── */
+    .diagram {
+      max-width: 960px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+    }
+
+    /* ── Zone label ──────────────────────────────── */
+    .zone-lbl {
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 10px;
+    }
+
+    /* ── Vertical connector ──────────────────────── */
+    .vc {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 36px;
+      position: relative;
+    }
+    .vc::before {
+      content: '';
+      position: absolute;
+      width: 1px;
+      top: 0; bottom: 0;
+      left: 50%;
+      background: linear-gradient(to bottom, transparent, var(--muted) 40%, var(--muted) 60%, transparent);
+    }
+    .vc span {
+      background: var(--bg);
+      padding: 0 6px;
+      font-size: 16px;
+      color: var(--muted);
+      z-index: 1;
+      line-height: 1;
+    }
+
+    /* ── Block base ──────────────────────────────── */
+    .blk {
+      border-radius: 10px;
+      border: 1px solid;
+      padding: 14px 16px;
+    }
+    .blk-title {
+      font-size: 12px;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+    .blk-sub {
+      font-size: 9px;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    /* ── Tag pill ────────────────────────────────── */
+    .tag {
+      display: inline-block;
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      padding: 2px 7px;
+      border-radius: 3px;
+      margin-top: 6px;
+      border: 1px solid;
+    }
+    .t-sky    { color: var(--sky);    background: rgba(14,165,233,.1);  border-color: rgba(14,165,233,.35); }
+    .t-indigo { color: var(--indigo); background: rgba(129,140,248,.1); border-color: rgba(129,140,248,.35);}
+    .t-violet { color: var(--violet); background: rgba(167,139,250,.1); border-color: rgba(167,139,250,.35);}
+    .t-emerald{ color: var(--emerald);background: rgba(16,185,129,.1);  border-color: rgba(16,185,129,.35); }
+    .t-lime   { color: var(--lime);   background: rgba(132,204,22,.1);  border-color: rgba(132,204,22,.35); }
+    .t-orange { color: var(--orange); background: rgba(249,115,22,.1);  border-color: rgba(249,115,22,.35); }
+    .t-muted  { color: var(--muted);  background: rgba(71,85,105,.12);  border-color: rgba(71,85,105,.35);  }
+    .t-dim    { color: #94a3b8;       background: rgba(255,255,255,.05);border-color: rgba(255,255,255,.1); }
+
+    /* ─────────────────────────────────────────────
+       ZONE 1 — Canales de entrada
+    ───────────────────────────────────────────── */
+    .channels {
+      display: flex;
+      gap: 14px;
+    }
+    .ch {
+      flex: 1;
+      text-align: center;
+    }
+    .ch-icon { font-size: 22px; margin-bottom: 8px; }
+
+    .ch-telegram {
+      background: var(--sky-d);
+      border-color: var(--sky);
+      box-shadow: 0 0 24px rgba(14,165,233,.15);
+    }
+    .ch-app {
+      background: var(--violet-d);
+      border-color: var(--violet);
+      box-shadow: 0 0 24px rgba(167,139,250,.15);
+    }
+
+    /* ─────────────────────────────────────────────
+       ZONE 2 — Railway
+    ───────────────────────────────────────────── */
+    .railway {
+      background: rgba(10,20,46,.85);
+      border: 2px solid var(--blue);
+      border-radius: 16px;
+      padding: 22px 20px 20px;
+      box-shadow:
+        0 0 48px rgba(59,130,246,.12),
+        inset 0 0 48px rgba(59,130,246,.04);
+      position: relative;
+      animation: ry-pulse 5s ease-in-out infinite;
+    }
+    @keyframes ry-pulse {
+      0%,100% { box-shadow: 0 0 48px rgba(59,130,246,.12), inset 0 0 48px rgba(59,130,246,.04); }
+      50%      { box-shadow: 0 0 64px rgba(59,130,246,.2),  inset 0 0 64px rgba(59,130,246,.07); }
+    }
+
+    .railway-badge {
+      position: absolute;
+      top: -13px; left: 18px;
+      background: var(--blue);
+      color: #fff;
+      font-family: 'Space Mono', monospace;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      padding: 3px 12px;
+      border-radius: 4px;
+    }
+
+    /* Services row */
+    .services {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+    .svc {
+      flex: 1;
+    }
+    .svc-tg  { background: var(--sky-d);    border-color: var(--sky);    box-shadow: 0 0 16px rgba(14,165,233,.1); }
+    .svc-api { background: var(--indigo-d); border-color: var(--indigo); box-shadow: 0 0 16px rgba(129,140,248,.1); }
+
+    /* MessageHandler */
+    .mh {
+      background: rgba(20,32,60,.9);
+      border-color: var(--blue);
+      text-align: center;
+      margin-bottom: 14px;
+      padding: 11px 16px;
+    }
+
+    /* Inner connector */
+    .ic {
+      display: flex;
+      justify-content: center;
+      color: var(--muted);
+      font-size: 13px;
+      margin: 4px 0;
+    }
+
+    /* Core row */
+    .core {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    /* Left column: QueryAgent + ChromaDB */
+    .left-col {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      width: 164px;
+      flex-shrink: 0;
+    }
+
+    .qa {
+      background: var(--violet-d);
+      border-color: var(--violet);
+      box-shadow: 0 0 16px rgba(167,139,250,.12);
+    }
+    .cdb {
+      flex: 1;
+      background: var(--purple-d);
+      border-color: var(--purple);
+      box-shadow: 0 0 16px rgba(192,132,252,.12);
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 14px;
+    }
+    .cdb-icon { font-size: 20px; margin-bottom: 6px; }
+
+    /* Pipeline block */
+    .pipeline {
+      flex: 1;
+      background: rgba(4,18,12,.9);
+      border-color: var(--emerald);
+      box-shadow: 0 0 16px rgba(16,185,129,.1);
+      padding: 14px;
+    }
+    .pipeline-label {
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--emerald);
+      margin-bottom: 10px;
+    }
+
+    .agents {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+    }
+    .agent {
+      background: rgba(16,185,129,.07);
+      border: 1px solid rgba(16,185,129,.22);
+      border-radius: 7px;
+      padding: 8px 9px;
+    }
+    .agent-name {
+      font-size: 10px;
+      font-weight: 700;
+      color: #6ee7b7;
+      display: block;
+      margin-bottom: 2px;
+    }
+    .agent-info {
+      font-size: 9px;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    /* Knowledge Base */
+    .kb {
+      background: var(--lime-d);
+      border-color: var(--lime);
+      box-shadow: 0 0 14px rgba(132,204,22,.08);
+    }
+    .kb-files {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 9px;
+    }
+    .kbf {
+      font-size: 9px;
+      background: rgba(132,204,22,.09);
+      border: 1px solid rgba(132,204,22,.28);
+      border-radius: 4px;
+      padding: 3px 8px;
+      color: #bef264;
+    }
+
+    /* ─────────────────────────────────────────────
+       ZONE 3 — External Services
+    ───────────────────────────────────────────── */
+    .externals {
+      display: flex;
+      gap: 12px;
+    }
+    .ext { flex: 1; }
+    .ext-icon { font-size: 20px; margin-bottom: 8px; }
+
+    .ex-openai   { background: #0b0b0b;              border-color: #333; }
+    .ex-drive    { background: rgba(5,46,22,.55);    border-color: var(--emerald); }
+    .ex-tasks    { background: rgba(28,22,14,.7);    border-color: var(--orange); }
+    .ex-calendar { background: rgba(8,26,50,.7);     border-color: var(--sky); }
+
+    /* ─────────────────────────────────────────────
+       Legend
+    ───────────────────────────────────────────── */
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 14px;
+      justify-content: center;
+      margin-top: 36px;
+      padding-top: 22px;
+      border-top: 1px solid var(--dim);
+    }
+    .leg {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      font-size: 9px;
+      color: var(--muted);
+    }
+    .leg-dot {
+      width: 10px; height: 10px;
+      border-radius: 2px;
+      border: 2px solid;
+      flex-shrink: 0;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>Second Brain Agent</h1>
+  <p>Diagrama de sistema · arquitectura de bloques</p>
+</header>
+
+<div class="diagram">
+
+  <!-- ── ZONE 1: Canales ─────────────────────── -->
+  <div class="zone-lbl">// canales de entrada</div>
+  <div class="channels">
+
+    <div class="blk ch ch-telegram">
+      <div class="ch-icon">✈️</div>
+      <div class="blk-title" style="color:#38bdf8">Telegram</div>
+      <div class="blk-sub">captura y consulta<br>mensajes de voz / texto</div>
+    </div>
+
+    <div class="blk ch ch-app">
+      <div class="ch-icon">🖥️</div>
+      <div class="blk-title" style="color:#c4b5fd">App</div>
+      <div class="blk-sub">dashboard web<br>chat + vistas KB</div>
+      <div class="tag t-dim">Vercel · Paso 21</div>
+    </div>
+
+  </div>
+
+  <div class="vc"><span>↓</span></div>
+
+  <!-- ── ZONE 2: Railway ─────────────────────── -->
+  <div class="zone-lbl">// plataforma de ejecución</div>
+  <div class="railway">
+    <div class="railway-badge">⚡ Railway</div>
+
+    <!-- Servicios -->
+    <div class="services">
+      <div class="blk svc svc-tg">
+        <div class="blk-title" style="color:#38bdf8">📨 Telegram Service</div>
+        <div class="blk-sub" style="margin-top:4px">telegram_bot.py<br>tipo: worker</div>
+        <div class="tag t-sky">Online ✓</div>
+      </div>
+      <div class="blk svc svc-api">
+        <div class="blk-title" style="color:#818cf8">🌐 API Service</div>
+        <div class="blk-sub" style="margin-top:4px">api.py · FastAPI + uvicorn<br>tipo: web</div>
+        <div class="tag t-indigo">Online ✓</div>
+      </div>
+    </div>
+
+    <div class="ic">↓</div>
+
+    <!-- MessageHandler -->
+    <div class="blk mh">
+      <div class="blk-title" style="color:#60a5fa">⚙️ MessageHandler — process_message()</div>
+      <div class="blk-sub" style="margin-top:3px">
+        core/agent_factory.py · detecta intent (QUERY / CAPTURE / ACTION / PIPELINE) · punto de entrada único para todos los canales
+      </div>
+    </div>
+
+    <div class="ic">↓</div>
+
+    <!-- Core: QueryAgent + Pipeline + ChromaDB -->
+    <div class="core">
+
+      <!-- Columna izquierda -->
+      <div class="left-col">
+        <div class="blk qa">
+          <div class="blk-title" style="color:#c4b5fd; font-size:11px">🔍 QueryAgent</div>
+          <div class="blk-sub" style="margin-top:4px">intent: QUERY<br>búsqueda RAG</div>
+        </div>
+        <div class="blk cdb">
+          <div class="cdb-icon">🧠</div>
+          <div class="blk-title" style="color:#e879f9; font-size:11px">ChromaDB</div>
+          <div class="blk-sub" style="margin-top:3px; text-align:center">vector store local<br>text-embedding-3-small</div>
+        </div>
+      </div>
+
+      <!-- Pipeline -->
+      <div class="blk pipeline">
+        <div class="pipeline-label">🔄 Pipeline · LangGraph StateGraph · 9 nodos</div>
+        <div class="agents">
+          <div class="agent">
+            <span class="agent-name">🎙️ TranscriptionAgent</span>
+            <span class="agent-info">Whisper-1<br>MP3 → texto</span>
+          </div>
+          <div class="agent">
+            <span class="agent-name">🧩 AnalysisAgent</span>
+            <span class="agent-info">GPT-4o-mini<br>clasifica y extrae</span>
+          </div>
+          <div class="agent">
+            <span class="agent-name">📝 MarkdownAgent</span>
+            <span class="agent-info">genera .md<br>en output/</span>
+          </div>
+          <div class="agent">
+            <span class="agent-name">🗂️ KBAgent</span>
+            <span class="agent-info">ideas, tasks, meetings<br>reminders, projects</span>
+          </div>
+          <div class="agent">
+            <span class="agent-name">✅ TasksAgent</span>
+            <span class="agent-info">→ Google Tasks<br>dedup SHA256</span>
+          </div>
+          <div class="agent">
+            <span class="agent-name">📅 CalendarAgent</span>
+            <span class="agent-info">→ Google Calendar<br>dedup SHA256</span>
+          </div>
+          <div class="agent">
+            <span class="agent-name">📦 ArchiveAgent</span>
+            <span class="agent-info">mueve MP3 a<br>processed/</span>
+          </div>
+          <div class="agent">
+            <span class="agent-name">☁️ DriveAgent</span>
+            <span class="agent-info">sync KB a<br>Google Drive</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="ic">↓</div>
+
+    <!-- Knowledge Base -->
+    <div class="blk kb">
+      <div class="blk-title" style="color:#bef264">🗄️ Knowledge Base — Markdown</div>
+      <div class="kb-files">
+        <span class="kbf">Ideas/ideas.md</span>
+        <span class="kbf">Tasks/tasks.md</span>
+        <span class="kbf">Projects/projects.md</span>
+        <span class="kbf">Reminders/reminders.md</span>
+        <span class="kbf">Meetings/*.md</span>
+        <span class="kbf">General_Notes/*.md</span>
+      </div>
+    </div>
+
+  </div><!-- /railway -->
+
+  <div class="vc"><span>↓</span></div>
+
+  <!-- ── ZONE 3: External Services ──────────── -->
+  <div class="zone-lbl">// servicios externos</div>
+  <div class="externals">
+
+    <div class="blk ext ex-openai">
+      <div class="ext-icon">🤖</div>
+      <div class="blk-title" style="color:#e2e8f0; font-size:11px">OpenAI API</div>
+      <div class="blk-sub" style="margin-top:5px">
+        Whisper-1 · transcripción<br>
+        GPT-4o-mini · análisis<br>
+        text-embedding-3-small
+      </div>
+    </div>
+
+    <div class="blk ext ex-drive">
+      <div class="ext-icon">📂</div>
+      <div class="blk-title" style="color:#4ade80; font-size:11px">Google Drive</div>
+      <div class="blk-sub" style="margin-top:5px">
+        backup KB completa<br>
+        descarga al startup<br>
+        sync tras cada captura
+      </div>
+      <div class="tag t-emerald">Drive API</div>
+    </div>
+
+    <div class="blk ext ex-tasks">
+      <div class="ext-icon">✅</div>
+      <div class="blk-title" style="color:#fb923c; font-size:11px">Google Tasks</div>
+      <div class="blk-sub" style="margin-top:5px">
+        lista "Second Brain Agent"<br>
+        reglas de fechas<br>
+        dedup SHA256
+      </div>
+      <div class="tag t-orange">Tasks API</div>
+    </div>
+
+    <div class="blk ext ex-calendar">
+      <div class="ext-icon">📅</div>
+      <div class="blk-title" style="color:#38bdf8; font-size:11px">Google Calendar</div>
+      <div class="blk-sub" style="margin-top:5px">
+        eventos con fecha+hora<br>
+        reglas de enrutado<br>
+        dedup SHA256
+      </div>
+      <div class="tag t-sky">Calendar API</div>
+    </div>
+
+  </div>
+
+  <!-- ── Legend ──────────────────────────────── -->
+  <div class="legend">
+    <div class="leg"><div class="leg-dot" style="border-color:var(--sky)"></div>Canal Telegram</div>
+    <div class="leg"><div class="leg-dot" style="border-color:var(--violet)"></div>App / Vercel</div>
+    <div class="leg"><div class="leg-dot" style="border-color:var(--blue)"></div>Railway</div>
+    <div class="leg"><div class="leg-dot" style="border-color:var(--emerald)"></div>Pipeline · Agentes</div>
+    <div class="leg"><div class="leg-dot" style="border-color:var(--purple)"></div>RAG · ChromaDB</div>
+    <div class="leg"><div class="leg-dot" style="border-color:var(--lime)"></div>Knowledge Base</div>
+    <div class="leg"><div class="leg-dot" style="border-color:#333"></div>Servicios externos</div>
+  </div>
+
+</div><!-- /diagram -->
+</body>
+</html>
